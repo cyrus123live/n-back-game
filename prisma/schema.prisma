@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UserProfile {
+  id            String   @id @default(cuid())
+  clerkUserId   String   @unique
+  xp            Int      @default(0)
+  level         Int      @default(1)
+  currentStreak Int      @default(0)
+  longestStreak Int      @default(0)
+  lastPlayedAt  DateTime?
+  streakFreezes Int      @default(3)
+  createdAt     DateTime @default(now())
+
+  sessions     Session[]
+  achievements UserAchievement[]
+}
+
+model Session {
+  id            String      @id @default(cuid())
+  userId        String
+  user          UserProfile @relation(fields: [userId], references: [id])
+  nLevel        Int
+  activeStimuli String[]
+  trialCount    Int
+  intervalMs    Int
+  results       Json
+  overallScore  Float
+  xpEarned      Int
+  maxCombo      Int         @default(0)
+  createdAt     DateTime    @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  user          UserProfile @relation(fields: [userId], references: [id])
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+}
