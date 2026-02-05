@@ -1,9 +1,23 @@
 // Format a Date as YYYY-MM-DD in the given IANA timezone
 export function formatDateInTz(date: Date, tz: string): string {
   try {
-    return new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(date);
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(date);
+    const get = (type: string) => parts.find(p => p.type === type)?.value ?? '';
+    return `${get('year')}-${get('month')}-${get('day')}`;
   } catch {
-    return new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC' }).format(date);
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'UTC',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(date);
+    const get = (type: string) => parts.find(p => p.type === type)?.value ?? '';
+    return `${get('year')}-${get('month')}-${get('day')}`;
   }
 }
 
