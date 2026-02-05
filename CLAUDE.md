@@ -71,9 +71,19 @@ Session has optional adaptive fields: `adaptive`, `startingLevel`, `endingLevel`
 - Adaptive difficulty is between-session only (evaluates at end, recommends next level: >=85% up, <=50% down)
 - Training program progression is score-gated (70% to advance, 90%+ to skip to next phase). Phase boundaries defined in `server/lib/programs.ts` as `TEMPLATE_PHASES`
 - Express `req.params.id` can be `string | string[]` - cast with `as string` in route handlers
+- Dashboard has inline settings (no separate settings screen) — N-level picker, stimuli toggles, collapsible Advanced section (trials, interval, adaptive)
+- Default stimuli are `['position', 'color']`
+- GameGrid renders a single centered square when `position` is not in `activeStimuli`
+- ResultsScreen propagates `newStreak` back to App.tsx via `onStreakUpdate` callback so the Navbar streak counter updates immediately after session save
+- CompactStatsCard combines level/rank, streak, total sessions, XP bar, and 12-week activity heatmap into one card
+- History screen shows chart, avg-by-type, achievements, and session list
 
 ## Git
 
 - Remote: `git@github.com:cyrus123live/n-back-game.git`
 - Branch: `main`
 - Always commit and push when asked
+
+## Workflow
+
+- After every set of changes, update this CLAUDE.md file to reflect the current state of the codebase, then commit and push
