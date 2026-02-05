@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../db.js';
 import { getAuth } from '@clerk/express';
+import { formatDateInTz, getYesterdayStr } from '../lib/dates.js';
 
 const router = Router();
 
@@ -24,25 +25,26 @@ router.post('/', async (req: Request, res: Response) => {
 
   try {
     const profile = await getOrCreateProfile(clerkUserId);
-    const { nLevel, activeStimuli, trialCount, intervalMs, results, overallScore, xpEarned, maxCombo, adaptive, startingLevel, endingLevel, levelChanges } = req.body;
+    const { nLevel, activeStimuli, trialCount, intervalMs, results, overallScore, xpEarned, maxCombo, adaptive, startingLevel, endingLevel, levelChanges, tz } = req.body;
+    const userTz = typeof tz === 'string' ? tz : 'UTC';
 
-    // Check if first play of the day
+    // Check if first play of the day (in user's timezone)
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const isFirstPlayToday = !profile.lastPlayedAt || profile.lastPlayedAt < today;
+    const todayStr = formatDateInTz(now, userTz);
+    const yesterdayStr = getYesterdayStr(todayStr);
+    const lastPlayedStr = profile.lastPlayedAt ? formatDateInTz(profile.lastPlayedAt, userTz) : null;
+    const isFirstPlayToday = lastPlayedStr !== todayStr;
 
     // Apply daily first-play bonus
     const finalXp = isFirstPlayToday ? Math.round(xpEarned * 1.5) : xpEarned;
 
     // Update streak
     let newStreak = profile.currentStreak;
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
 
     if (isFirstPlayToday) {
-      if (profile.lastPlayedAt && profile.lastPlayedAt >= yesterday) {
+      if (lastPlayedStr === yesterdayStr) {
         newStreak += 1;
-      } else if (!profile.lastPlayedAt || profile.lastPlayedAt < yesterday) {
+      } else {
         // Streak broken - check for freeze
         if (profile.streakFreezes > 0 && profile.lastPlayedAt) {
           // Use a streak freeze

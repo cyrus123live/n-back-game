@@ -26,9 +26,9 @@ export function ProgressChart({ data }: ProgressChartProps) {
             dataKey="date"
             stroke="#6b7280"
             fontSize={11}
-            tickFormatter={(val) => {
-              const d = new Date(val);
-              return `${d.getMonth() + 1}/${d.getDate()}`;
+            tickFormatter={(val: string) => {
+              const [, m, d] = val.split('-');
+              return `${parseInt(m)}/${parseInt(d)}`;
             }}
           />
           <YAxis
@@ -43,6 +43,10 @@ export function ProgressChart({ data }: ProgressChartProps) {
               border: '1px solid #374151',
               borderRadius: '8px',
               fontSize: '12px',
+            }}
+            labelFormatter={(label: string) => {
+              const [, m, d] = String(label).split('-');
+              return `${parseInt(m)}/${parseInt(d)}`;
             }}
             formatter={(value: number) => [`${value}%`, 'Score']}
           />

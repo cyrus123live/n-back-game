@@ -71,7 +71,8 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
     const byDateLevel: Record<string, Record<number, { total: number; count: number }>> = {};
 
     for (const s of allSessions) {
-      const date = new Date(s.createdAt).toISOString().split('T')[0];
+      const dt = new Date(s.createdAt);
+      const date = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
       if (!byDateLevel[date]) byDateLevel[date] = {};
       if (!byDateLevel[date][s.nLevel]) byDateLevel[date][s.nLevel] = { total: 0, count: 0 };
       byDateLevel[date][s.nLevel].total += s.overallScore;
@@ -133,9 +134,9 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
                     dataKey="date"
                     stroke="#6b7280"
                     fontSize={11}
-                    tickFormatter={(val) => {
-                      const d = new Date(val);
-                      return `${d.getMonth() + 1}/${d.getDate()}`;
+                    tickFormatter={(val: string) => {
+                      const [, m, d] = val.split('-');
+                      return `${parseInt(m)}/${parseInt(d)}`;
                     }}
                   />
                   <YAxis
@@ -150,6 +151,10 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
                       border: '1px solid #374151',
                       borderRadius: '8px',
                       fontSize: '12px',
+                    }}
+                    labelFormatter={(label: string) => {
+                      const [, m, d] = String(label).split('-');
+                      return `${parseInt(m)}/${parseInt(d)}`;
                     }}
                     formatter={(value: number) => [`${value}%`]}
                   />

@@ -14,6 +14,7 @@ import type {
 } from '../types';
 
 const BASE = '/api';
+const USER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 async function fetchJSON<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
@@ -27,7 +28,7 @@ async function fetchJSON<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export async function getProfile(): Promise<UserProfile> {
-  return fetchJSON('/profile');
+  return fetchJSON(`/profile?tz=${encodeURIComponent(USER_TZ)}`);
 }
 
 export async function saveSession(
@@ -54,6 +55,7 @@ export async function saveSession(
       overallScore,
       xpEarned,
       maxCombo,
+      tz: USER_TZ,
       ...(adaptiveData ? {
         adaptive: true,
         startingLevel: adaptiveData.startingLevel,
@@ -72,7 +74,7 @@ export async function getSessions(
 }
 
 export async function getStats(): Promise<StatsData> {
-  return fetchJSON('/stats');
+  return fetchJSON(`/stats?tz=${encodeURIComponent(USER_TZ)}`);
 }
 
 export async function getAchievements(): Promise<UserAchievement[]> {
@@ -80,7 +82,7 @@ export async function getAchievements(): Promise<UserAchievement[]> {
 }
 
 export async function getDailyChallenge(): Promise<DailyChallenge> {
-  return fetchJSON('/daily-challenge');
+  return fetchJSON(`/daily-challenge?tz=${encodeURIComponent(USER_TZ)}`);
 }
 
 export async function deleteSession(sessionId: string): Promise<void> {

@@ -24,7 +24,7 @@
   }
 
   .key-hint {
-    @apply inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-700 border border-gray-600
+    @apply hidden md:inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-700 border border-gray-600
            text-xs font-mono font-bold text-gray-300 uppercase;
   }
 }

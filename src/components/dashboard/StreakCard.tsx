@@ -25,7 +25,7 @@ export function StreakCard({ currentStreak, longestStreak, streakFreezes, heatma
       const daysAgo = w * 7 + (6 - d);
       const cellDate = new Date(today);
       cellDate.setDate(cellDate.getDate() - daysAgo);
-      const dateKey = cellDate.toISOString().split('T')[0];
+      const dateKey = `${cellDate.getFullYear()}-${String(cellDate.getMonth() + 1).padStart(2, '0')}-${String(cellDate.getDate()).padStart(2, '0')}`;
       const data = heatmap[dateKey];
 
       week.push({

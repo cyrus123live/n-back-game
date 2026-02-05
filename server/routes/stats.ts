@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../db.js';
 import { getAuth } from '@clerk/express';
+import { formatDateInTz, getYesterdayStr } from '../lib/dates.js';
 
 const router = Router();
 
@@ -26,23 +27,19 @@ router.get('/profile', async (req: Request, res: Response) => {
     const profile = await getOrCreateProfile(clerkUserId);
 
     // Check if streak is broken (missed yesterday without freeze)
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    const userTz = (req.query.tz as string) || 'UTC';
+    const todayStr = formatDateInTz(new Date(), userTz);
+    const yesterdayStr = getYesterdayStr(todayStr);
+    const lastPlayedStr = profile.lastPlayedAt ? formatDateInTz(profile.lastPlayedAt, userTz) : null;
 
     let streakBroken = false;
-    if (profile.lastPlayedAt && profile.lastPlayedAt < yesterday && profile.currentStreak > 0) {
-      // Check if more than 1 day gap
-      const daysDiff = Math.floor((today.getTime() - profile.lastPlayedAt.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysDiff > 1) {
-        streakBroken = true;
-        await prisma.userProfile.update({
-          where: { id: profile.id },
-          data: { currentStreak: 0 },
-        });
-        profile.currentStreak = 0;
-      }
+    if (lastPlayedStr && lastPlayedStr < yesterdayStr && profile.currentStreak > 0) {
+      streakBroken = true;
+      await prisma.userProfile.update({
+        where: { id: profile.id },
+        data: { currentStreak: 0 },
+      });
+      profile.currentStreak = 0;
     }
 
     // Calculate XP needed for next level
@@ -75,6 +72,8 @@ router.get('/stats', async (req: Request, res: Response) => {
   try {
     const profile = await getOrCreateProfile(clerkUserId);
 
+    const statsTz = (req.query.tz as string) || 'UTC';
+
     const sessions = await prisma.session.findMany({
       where: { userId: profile.id },
       orderBy: { createdAt: 'desc' },
@@ -84,7 +83,7 @@ router.get('/stats', async (req: Request, res: Response) => {
     // Score trend over last 30 sessions
     const recentSessions = sessions.slice(0, 30).reverse();
     const scoreTrend = recentSessions.map((s) => ({
-      date: s.createdAt.toISOString().split('T')[0],
+      date: formatDateInTz(s.createdAt, statsTz),
       score: Math.round(s.overallScore * 100),
       nLevel: s.nLevel,
     }));
@@ -104,7 +103,7 @@ router.get('/stats', async (req: Request, res: Response) => {
 
     for (const s of sessions) {
       if (s.createdAt >= twelveWeeksAgo) {
-        const dateKey = s.createdAt.toISOString().split('T')[0];
+        const dateKey = formatDateInTz(s.createdAt, statsTz);
         if (!heatmap[dateKey]) {
           heatmap[dateKey] = { count: 0, avgScore: 0 };
         }
@@ -169,9 +168,9 @@ router.get('/achievements', async (req: Request, res: Response) => {
 });
 
 // GET /api/daily-challenge - Today's challenge
-router.get('/daily-challenge', async (_req: Request, res: Response) => {
-  const today = new Date();
-  const dateStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+router.get('/daily-challenge', async (req: Request, res: Response) => {
+  const challengeTz = (req.query.tz as string) || 'UTC';
+  const dateStr = formatDateInTz(new Date(), challengeTz);
 
   // Simple seeded random from date
   let seed = 0;
@@ -192,9 +191,10 @@ router.get('/daily-challenge', async (_req: Request, res: Response) => {
   const shuffled = [...allStimuli].sort(() => seededRandom() - 0.5);
   const activeStimuli = shuffled.slice(0, stimCount);
 
-  // Calculate time until next challenge (midnight)
-  const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-  const timeUntilNext = tomorrow.getTime() - Date.now();
+  // Approximate time until next challenge (client computes accurate local countdown)
+  const endOfDay = new Date();
+  endOfDay.setHours(24, 0, 0, 0);
+  const timeUntilNext = endOfDay.getTime() - Date.now();
 
   res.json({
     nLevel,

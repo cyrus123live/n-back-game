@@ -9,7 +9,7 @@ interface TutorialOverlayProps {
 }
 
 export function TutorialOverlay({ step, onNext, onSkip, stepIndex, totalSteps }: TutorialOverlayProps) {
-  const keyLabel = step.waitForKey === 'position' ? 'Position (A)' : 'Audio (L)';
+  const keyLabel = step.waitForKey === 'position' ? 'Position' : 'Audio';
 
   return (
     <div className="fixed inset-0 z-40 pointer-events-none">
