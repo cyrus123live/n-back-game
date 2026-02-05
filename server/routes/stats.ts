@@ -280,7 +280,16 @@ router.get('/debug/streak', async (_req: Request, res: Response) => {
       try {
         const utcHour = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', hour: 'numeric', hour12: false }).format(now);
         const torontoHour = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Toronto', hour: 'numeric', hour12: false }).format(now);
-        return { utcHour, torontoHour, same: utcHour === torontoHour };
+        const vancouverHour = (() => { try { return new Intl.DateTimeFormat('en-US', { timeZone: 'America/Vancouver', hour: 'numeric', hour12: false }).format(now); } catch (e) { return `ERROR: ${e}`; } })();
+        const vancouverDate = (() => { try { return formatDateInTz(now, 'America/Vancouver'); } catch (e) { return `ERROR: ${e}`; } })();
+        // Test with the first profile's lastPlayedAt to see what old code would have computed
+        const firstProfileLastPlayed = profiles[0]?.lastPlayedAt;
+        const oldCodeTest = firstProfileLastPlayed ? (() => {
+          const lpVancouver = (() => { try { return formatDateInTz(firstProfileLastPlayed, 'America/Vancouver'); } catch { return formatDateInTz(firstProfileLastPlayed, 'UTC'); } })();
+          const lpUTC = formatDateInTz(firstProfileLastPlayed, 'UTC');
+          return { lastPlayedAt: firstProfileLastPlayed.toISOString(), inVancouver: lpVancouver, inUTC: lpUTC };
+        })() : null;
+        return { utcHour, torontoHour, vancouverHour, vancouverDate, oldCodeTest };
       } catch (e) {
         return { error: String(e) };
       }
