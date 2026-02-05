@@ -32,6 +32,39 @@ export function calculateResults(
   return results;
 }
 
+export function calculateAdaptiveResults(
+  sequence: TrialStimulus[],
+  responses: Map<number, Set<StimulusType>>,
+  trialNLevels: number[],
+  activeStimuli: StimulusType[]
+): SessionResults {
+  const results: SessionResults = {};
+
+  for (const type of activeStimuli) {
+    const result: TrialResult = { hits: 0, misses: 0, falseAlarms: 0 };
+
+    for (let i = 0; i < sequence.length; i++) {
+      const nLevel = trialNLevels[i];
+      if (i < nLevel) continue; // Not scorable
+
+      const wasMatch = isMatch(sequence, i, nLevel, type);
+      const playerResponded = responses.get(i)?.has(type) ?? false;
+
+      if (wasMatch && playerResponded) {
+        result.hits++;
+      } else if (wasMatch && !playerResponded) {
+        result.misses++;
+      } else if (!wasMatch && playerResponded) {
+        result.falseAlarms++;
+      }
+    }
+
+    results[type] = result;
+  }
+
+  return results;
+}
+
 export function calculateAccuracy(result: TrialResult): number {
   const total = result.hits + result.misses + result.falseAlarms;
   if (total === 0) return 1;

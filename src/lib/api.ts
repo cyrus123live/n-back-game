@@ -7,6 +7,9 @@ import type {
   UserAchievement,
   GameSettings,
   SessionResults,
+  AdaptiveLevelChange,
+  ProgramsResponse,
+  TrainingProgramRecord,
 } from '../types';
 
 const BASE = '/api';
@@ -31,12 +34,18 @@ export async function saveSession(
   results: SessionResults,
   overallScore: number,
   xpEarned: number,
-  maxCombo: number
+  maxCombo: number,
+  adaptiveData?: {
+    adaptive: boolean;
+    startingLevel?: number;
+    endingLevel?: number;
+    levelChanges?: AdaptiveLevelChange[];
+  }
 ): Promise<SessionSaveResponse> {
   return fetchJSON('/sessions', {
     method: 'POST',
     body: JSON.stringify({
-      nLevel: settings.nLevel,
+      nLevel: adaptiveData?.endingLevel ?? settings.nLevel,
       activeStimuli: settings.activeStimuli,
       trialCount: settings.trialCount,
       intervalMs: settings.intervalMs,
@@ -44,6 +53,12 @@ export async function saveSession(
       overallScore,
       xpEarned,
       maxCombo,
+      ...(adaptiveData ? {
+        adaptive: true,
+        startingLevel: adaptiveData.startingLevel,
+        endingLevel: adaptiveData.endingLevel,
+        levelChanges: adaptiveData.levelChanges,
+      } : {}),
     }),
   });
 }
@@ -65,4 +80,30 @@ export async function getAchievements(): Promise<UserAchievement[]> {
 
 export async function getDailyChallenge(): Promise<DailyChallenge> {
   return fetchJSON('/daily-challenge');
+}
+
+export async function deleteSession(sessionId: string): Promise<void> {
+  await fetchJSON(`/sessions/${sessionId}`, { method: 'DELETE' });
+}
+
+export async function getPrograms(): Promise<ProgramsResponse> {
+  return fetchJSON('/programs');
+}
+
+export async function enrollInProgram(templateId: string): Promise<{ program: TrainingProgramRecord }> {
+  return fetchJSON('/programs/enroll', {
+    method: 'POST',
+    body: JSON.stringify({ templateId }),
+  });
+}
+
+export async function completeProgramSession(programId: string, sessionId: string): Promise<{ program: TrainingProgramRecord; completed: boolean }> {
+  return fetchJSON(`/programs/${programId}/complete-session`, {
+    method: 'POST',
+    body: JSON.stringify({ sessionId }),
+  });
+}
+
+export async function abandonProgram(programId: string): Promise<void> {
+  await fetchJSON(`/programs/${programId}`, { method: 'DELETE' });
 }

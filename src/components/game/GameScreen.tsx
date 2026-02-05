@@ -11,7 +11,18 @@ import { TrialProgress } from './TrialProgress';
 
 interface GameScreenProps {
   settings: GameSettings;
-  onFinish: (results: SessionResults, overallScore: number, xpEarned: number, maxCombo: number) => void;
+  onFinish: (
+    results: SessionResults,
+    overallScore: number,
+    xpEarned: number,
+    maxCombo: number,
+    adaptiveData?: {
+      adaptive: boolean;
+      startingLevel: number;
+      endingLevel: number;
+      levelChanges: { trial: number; fromLevel: number; toLevel: number }[];
+    }
+  ) => void;
   onCancel: () => void;
 }
 
@@ -56,6 +67,9 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
     overallScore,
     xpEarned,
     countdown,
+    adaptiveLevel,
+    adaptiveData,
+    levelChangeNotification,
   } = useGameLoop(handleTrialAdvance);
 
   // Start game on mount
@@ -77,7 +91,13 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
   // Handle results
   useEffect(() => {
     if (gameState.phase === 'results' && results) {
-      onFinish(results, overallScore, xpEarned, gameState.maxCombo);
+      onFinish(
+        results,
+        overallScore,
+        xpEarned,
+        gameState.maxCombo,
+        adaptiveData || undefined
+      );
     }
   }, [gameState.phase]);  // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -124,8 +144,17 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
       <TrialProgress
         current={gameState.currentTrial}
         total={gameState.sequence.length}
-        nLevel={settings.nLevel}
+        nLevel={settings.adaptive ? adaptiveLevel : settings.nLevel}
       />
+
+      {/* Adaptive level change notification */}
+      {levelChangeNotification && (
+        <div className="level-change-notification text-center">
+          <span className={`text-lg font-bold ${levelChangeNotification.direction === 'up' ? 'text-green-400' : 'text-orange-400'}`}>
+            Level {levelChangeNotification.direction === 'up' ? 'Up' : 'Down'}! {levelChangeNotification.level}-Back
+          </span>
+        </div>
+      )}
 
       <GameGrid
         stimulus={currentStimulus}

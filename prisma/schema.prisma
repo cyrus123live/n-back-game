@@ -20,6 +20,7 @@ model UserProfile {
 
   sessions     Session[]
   achievements UserAchievement[]
+  programs     TrainingProgram[]
 }
 
 model Session {
@@ -34,10 +35,28 @@ model Session {
   overallScore  Float
   xpEarned      Int
   maxCombo      Int         @default(0)
+  adaptive      Boolean     @default(false)
+  startingLevel Int?
+  endingLevel   Int?
+  levelChanges  Json?
   createdAt     DateTime    @default(now())
 
   @@index([userId])
   @@index([createdAt])
+}
+
+model TrainingProgram {
+  id                String      @id @default(cuid())
+  userId            String
+  user              UserProfile @relation(fields: [userId], references: [id])
+  templateId        String
+  currentDay        Int         @default(1)
+  status            String      @default("active")
+  startedAt         DateTime    @default(now())
+  completedAt       DateTime?
+  completedSessions Json        @default("[]")
+
+  @@index([userId])
 }
 
 model UserAchievement {

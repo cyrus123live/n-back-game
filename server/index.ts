@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { clerkMiddleware } from '@clerk/express';
 import sessionRoutes from './routes/sessions.js';
 import statsRoutes from './routes/stats.js';
+import programRoutes from './routes/programs.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,6 +20,7 @@ app.use(clerkMiddleware());
 // API routes
 app.use('/api/sessions', sessionRoutes);
 app.use('/api', statsRoutes);
+app.use('/api/programs', programRoutes);
 
 // Serve static files in production
 const clientPath = path.join(__dirname, '../client');

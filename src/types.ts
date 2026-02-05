@@ -5,6 +5,13 @@ export interface GameSettings {
   activeStimuli: StimulusType[];
   trialCount: number;
   intervalMs: number;
+  adaptive?: boolean;
+}
+
+export interface AdaptiveLevelChange {
+  trial: number;
+  fromLevel: number;
+  toLevel: number;
 }
 
 export interface TrialStimulus {
@@ -60,6 +67,10 @@ export interface SessionRecord {
   overallScore: number;
   xpEarned: number;
   maxCombo: number;
+  adaptive?: boolean;
+  startingLevel?: number;
+  endingLevel?: number;
+  levelChanges?: AdaptiveLevelChange[];
   createdAt: string;
 }
 
@@ -104,6 +115,20 @@ export interface UserAchievement {
   id: string;
   achievementId: string;
   unlockedAt: string;
+}
+
+export interface TrainingProgramRecord {
+  id: string;
+  templateId: string;
+  currentDay: number;
+  status: string;
+  startedAt: string;
+  completedAt: string | null;
+  completedSessions: string[];
+}
+
+export interface ProgramsResponse {
+  programs: TrainingProgramRecord[];
 }
 
 export const KEY_MAP: Record<string, StimulusType> = {

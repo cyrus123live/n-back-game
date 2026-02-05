@@ -7,8 +7,10 @@ import { SettingsScreen } from './components/settings/SettingsScreen';
 import { GameScreen } from './components/game/GameScreen';
 import { ResultsScreen } from './components/results/ResultsScreen';
 import { HistoryScreen } from './components/history/HistoryScreen';
+import { TutorialScreen } from './components/tutorial/TutorialScreen';
+import { ProgramsScreen } from './components/programs/ProgramsScreen';
 
-type View = 'dashboard' | 'settings' | 'game' | 'results' | 'history';
+type View = 'dashboard' | 'settings' | 'game' | 'results' | 'history' | 'tutorial' | 'programs';
 
 export default function App() {
   const [view, setView] = useState<View>('dashboard');
@@ -19,7 +21,12 @@ export default function App() {
     overallScore: number;
     xpEarned: number;
     maxCombo: number;
+    adaptive?: boolean;
+    startingLevel?: number;
+    endingLevel?: number;
+    levelChanges?: { trial: number; fromLevel: number; toLevel: number }[];
   } | null>(null);
+  const [activeProgramId, setActiveProgramId] = useState<string | null>(null);
 
   useEffect(() => {
     getProfile()
@@ -47,12 +54,33 @@ export default function App() {
   }, []);
 
   const handleGameFinish = useCallback(
-    (results: SessionResults, overallScore: number, xpEarned: number, maxCombo: number) => {
-      setGameResults({ results, overallScore, xpEarned, maxCombo });
+    (
+      results: SessionResults,
+      overallScore: number,
+      xpEarned: number,
+      maxCombo: number,
+      adaptiveData?: {
+        adaptive: boolean;
+        startingLevel: number;
+        endingLevel: number;
+        levelChanges: { trial: number; fromLevel: number; toLevel: number }[];
+      }
+    ) => {
+      setGameResults({ results, overallScore, xpEarned, maxCombo, ...adaptiveData });
       setView('results');
     },
     []
   );
+
+  const handleTutorial = useCallback(() => {
+    setView('tutorial');
+  }, []);
+
+  const handleProgramPlay = useCallback((settings: GameSettings, programId: string) => {
+    setActiveProgramId(programId);
+    setGameSettings(settings);
+    setView('game');
+  }, []);
 
   const handlePlayAgain = useCallback(() => {
     if (gameSettings) {
@@ -67,7 +95,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      {view !== 'game' && (
+      {view !== 'game' && view !== 'tutorial' && (
         <Navbar
           currentStreak={currentStreak}
           onNavigate={handleNavigate}
@@ -77,7 +105,13 @@ export default function App() {
 
       <main>
         {view === 'dashboard' && (
-          <Dashboard onPlay={handlePlay} onDailyChallenge={handleDailyChallenge} />
+          <Dashboard
+            onPlay={handlePlay}
+            onDailyChallenge={handleDailyChallenge}
+            onTutorial={handleTutorial}
+            onNavigate={handleNavigate}
+            onProgramPlay={handleProgramPlay}
+          />
         )}
 
         {view === 'settings' && (
@@ -92,7 +126,17 @@ export default function App() {
             key={Date.now()}
             settings={gameSettings}
             onFinish={handleGameFinish}
-            onCancel={() => setView('settings')}
+            onCancel={() => {
+              setActiveProgramId(null);
+              setView('settings');
+            }}
+          />
+        )}
+
+        {view === 'tutorial' && (
+          <TutorialScreen
+            onComplete={() => setView('settings')}
+            onSkip={() => setView('settings')}
           />
         )}
 
@@ -103,13 +147,28 @@ export default function App() {
             overallScore={gameResults.overallScore}
             xpEarned={gameResults.xpEarned}
             maxCombo={gameResults.maxCombo}
+            adaptive={gameResults.adaptive}
+            startingLevel={gameResults.startingLevel}
+            endingLevel={gameResults.endingLevel}
+            levelChanges={gameResults.levelChanges}
+            activeProgramId={activeProgramId}
             onPlayAgain={handlePlayAgain}
-            onBackToMenu={() => setView('dashboard')}
+            onBackToMenu={() => {
+              setActiveProgramId(null);
+              setView('dashboard');
+            }}
           />
         )}
 
         {view === 'history' && (
           <HistoryScreen onBack={() => setView('dashboard')} />
+        )}
+
+        {view === 'programs' && (
+          <ProgramsScreen
+            onBack={() => setView('dashboard')}
+            onStartSession={handleProgramPlay}
+          />
         )}
       </main>
     </div>

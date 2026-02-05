@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 import type { SessionRecord } from '../../types';
-import { getSessions } from '../../lib/api';
+import { getSessions, deleteSession } from '../../lib/api';
 import { STIMULUS_LABELS } from '../../lib/constants';
 
 const LEVEL_COLORS: Record<number, string> = {
@@ -26,6 +26,8 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -46,6 +48,21 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
     };
     load();
   }, [page]);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteSession(deleteTarget);
+      setSessions((prev) => prev.filter((s) => s.id !== deleteTarget));
+      setAllSessions((prev) => prev.filter((s) => s.id !== deleteTarget));
+    } catch {
+      // ignore
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
 
   const chartData = useMemo(() => {
     if (allSessions.length === 0) return { data: [], levels: [] as number[] };
@@ -165,6 +182,11 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
                   <div>
                     <div className="font-bold">
                       {session.nLevel}-Back
+                      {session.adaptive && (
+                        <span className="text-xs bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded ml-2">
+                          Adaptive
+                        </span>
+                      )}
                       <span className="text-sm text-gray-400 ml-2 font-normal">
                         {session.activeStimuli.map((s) => STIMULUS_LABELS[s] || s).join(' + ')}
                       </span>
@@ -173,20 +195,33 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
                       {date.toLocaleDateString()} {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       {' • '}{session.trialCount} trials
                       {session.maxCombo > 0 && ` • ${session.maxCombo}× combo`}
+                      {session.adaptive && session.startingLevel != null && session.endingLevel != null && (
+                        <> • {session.startingLevel} → {session.endingLevel}</>
+                      )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div
-                      className={`text-2xl font-black ${
-                        scorePercent >= 90 ? 'text-green-400' :
-                        scorePercent >= 70 ? 'text-yellow-400' :
-                        scorePercent >= 50 ? 'text-orange-400' :
-                        'text-red-400'
-                      }`}
-                    >
-                      {scorePercent}%
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div
+                        className={`text-2xl font-black ${
+                          scorePercent >= 90 ? 'text-green-400' :
+                          scorePercent >= 70 ? 'text-yellow-400' :
+                          scorePercent >= 50 ? 'text-orange-400' :
+                          'text-red-400'
+                        }`}
+                      >
+                        {scorePercent}%
+                      </div>
+                      <div className="text-xs text-yellow-400">+{session.xpEarned} XP</div>
                     </div>
-                    <div className="text-xs text-yellow-400">+{session.xpEarned} XP</div>
+                    <button
+                      onClick={() => setDeleteTarget(session.id)}
+                      className="text-gray-600 hover:text-red-400 transition-colors p-1"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               );
@@ -215,6 +250,32 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
             </div>
           )}
         </>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+          <div className="card max-w-sm w-full space-y-4">
+            <h3 className="text-lg font-bold">Delete this session?</h3>
+            <p className="text-sm text-gray-400">This action cannot be undone. XP earned from this session will not be recalculated.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="btn-secondary flex-1"
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-semibold rounded-xl transition-all duration-200 active:scale-95 disabled:opacity-50"
+                disabled={deleting}
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

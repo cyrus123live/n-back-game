@@ -1,7 +1,5 @@
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
 
-const hasClerk = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
 interface NavbarProps {
   currentStreak?: number;
   onNavigate: (view: string) => void;
@@ -30,6 +28,11 @@ export function Navbar({ currentStreak, onNavigate, currentView }: NavbarProps) 
               active={currentView === 'history'}
               onClick={() => onNavigate('history')}
             />
+            <NavLink
+              label="Programs"
+              active={currentView === 'programs'}
+              onClick={() => onNavigate('programs')}
+            />
           </div>
         </div>
 
@@ -41,20 +44,16 @@ export function Navbar({ currentStreak, onNavigate, currentView }: NavbarProps) 
             </div>
           )}
 
-          {hasClerk && (
-            <>
-              <SignedIn>
-                <UserButton afterSignOutUrl="/" />
-              </SignedIn>
-              <SignedOut>
-                <SignInButton mode="modal">
-                  <button className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-800">
-                    Sign In
-                  </button>
-                </SignInButton>
-              </SignedOut>
-            </>
-          )}
+          <SignedIn>
+            <UserButton afterSignOutUrl="/" />
+          </SignedIn>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-800">
+                Sign In
+              </button>
+            </SignInButton>
+          </SignedOut>
         </div>
       </div>
     </nav>

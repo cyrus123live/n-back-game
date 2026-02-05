@@ -23,6 +23,7 @@ export function SettingsScreen({ onStart, dailyChallenge, onBack }: SettingsScre
   const [activeStimuli, setActiveStimuli] = useState<StimulusType[]>(['position', 'audio']);
   const [trialCount, setTrialCount] = useState(25);
   const [intervalMs, setIntervalMs] = useState(2500);
+  const [adaptive, setAdaptive] = useState(false);
 
   const toggleStimulus = (type: StimulusType) => {
     setActiveStimuli((prev) => {
@@ -35,7 +36,7 @@ export function SettingsScreen({ onStart, dailyChallenge, onBack }: SettingsScre
   };
 
   const handleStart = () => {
-    onStart({ nLevel, activeStimuli, trialCount, intervalMs });
+    onStart({ nLevel, activeStimuli, trialCount, intervalMs, adaptive });
   };
 
   const handleDailyChallenge = () => {
@@ -83,7 +84,9 @@ export function SettingsScreen({ onStart, dailyChallenge, onBack }: SettingsScre
 
       {/* N-Level */}
       <div className="card">
-        <label className="block text-sm text-gray-400 mb-3 font-medium">N-Back Level</label>
+        <label className="block text-sm text-gray-400 mb-3 font-medium">
+          {adaptive ? 'Starting Level' : 'N-Back Level'}
+        </label>
         <div className="flex gap-2 flex-wrap">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
             <button
@@ -100,6 +103,30 @@ export function SettingsScreen({ onStart, dailyChallenge, onBack }: SettingsScre
               {n}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Adaptive Difficulty Toggle */}
+      <div className="card">
+        <div className="flex items-center justify-between">
+          <div>
+            <label className="block text-sm text-gray-300 font-medium">Adaptive Difficulty</label>
+            <p className="text-xs text-gray-500 mt-1">N-level adjusts based on your performance</p>
+          </div>
+          <button
+            onClick={() => setAdaptive(!adaptive)}
+            className={`
+              relative w-12 h-7 rounded-full transition-colors duration-200
+              ${adaptive ? 'bg-primary-600' : 'bg-gray-600'}
+            `}
+          >
+            <div
+              className={`
+                absolute top-0.5 w-6 h-6 rounded-full bg-white transition-transform duration-200
+                ${adaptive ? 'translate-x-5' : 'translate-x-0.5'}
+              `}
+            />
+          </button>
         </div>
       </div>
 
@@ -191,7 +218,7 @@ export function SettingsScreen({ onStart, dailyChallenge, onBack }: SettingsScre
 
       {/* Start Button */}
       <button onClick={handleStart} className="btn-primary w-full text-lg py-4">
-        Start {nLevel}-Back
+        Start {nLevel}-Back{adaptive ? ' (Adaptive)' : ''}
       </button>
     </div>
   );

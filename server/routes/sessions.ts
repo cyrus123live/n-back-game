@@ -24,7 +24,7 @@ router.post('/', async (req: Request, res: Response) => {
 
   try {
     const profile = await getOrCreateProfile(clerkUserId);
-    const { nLevel, activeStimuli, trialCount, intervalMs, results, overallScore, xpEarned, maxCombo } = req.body;
+    const { nLevel, activeStimuli, trialCount, intervalMs, results, overallScore, xpEarned, maxCombo, adaptive, startingLevel, endingLevel, levelChanges } = req.body;
 
     // Check if first play of the day
     const now = new Date();
@@ -77,6 +77,10 @@ router.post('/', async (req: Request, res: Response) => {
         overallScore,
         xpEarned: finalXp,
         maxCombo: maxCombo || 0,
+        adaptive: adaptive || false,
+        startingLevel: startingLevel ?? null,
+        endingLevel: endingLevel ?? null,
+        levelChanges: levelChanges ?? null,
       },
     });
 
@@ -93,12 +97,13 @@ router.post('/', async (req: Request, res: Response) => {
       },
     });
 
-    // Check achievements
+    // Check achievements (use endingLevel for adaptive sessions)
+    const effectiveNLevel = adaptive && endingLevel ? endingLevel : nLevel;
     const newAchievements = await checkAchievements(profile.id, {
       sessionCount: await prisma.session.count({ where: { userId: profile.id } }),
       currentStreak: newStreak,
       overallScore,
-      nLevel,
+      nLevel: effectiveNLevel,
       activeStimuli,
       maxCombo: maxCombo || 0,
       level: newLevel,
@@ -233,5 +238,26 @@ async function checkAchievements(userId: string, data: AchievementCheckData): Pr
 
   return newAchievements;
 }
+
+// DELETE /api/sessions/:id - Delete a session
+router.delete('/:id', async (req: Request, res: Response) => {
+  const clerkUserId = getClerkUserId(req);
+  if (!clerkUserId) return res.status(401).json({ error: 'Unauthorized' });
+
+  try {
+    const profile = await getOrCreateProfile(clerkUserId);
+    const sessionId = req.params.id as string;
+    const session = await prisma.session.findUnique({ where: { id: sessionId } });
+
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+    if (session.userId !== profile.id) return res.status(403).json({ error: 'Forbidden' });
+
+    await prisma.session.delete({ where: { id: sessionId } });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting session:', err);
+    res.status(500).json({ error: 'Failed to delete session' });
+  }
+});
 
 export default router;

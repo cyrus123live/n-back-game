@@ -1,22 +1,27 @@
 import { useEffect, useState } from 'react';
-import type { UserProfile, StatsData, DailyChallenge as DailyChallengeType, UserAchievement as UserAchievementType } from '../../types';
-import { getProfile, getStats, getDailyChallenge, getAchievements } from '../../lib/api';
+import type { UserProfile, StatsData, DailyChallenge as DailyChallengeType, UserAchievement as UserAchievementType, GameSettings, TrainingProgramRecord } from '../../types';
+import { getProfile, getStats, getDailyChallenge, getAchievements, getPrograms } from '../../lib/api';
 import { StreakCard } from './StreakCard';
 import { LevelCard } from './LevelCard';
 import { ProgressChart } from './ProgressChart';
 import { AchievementGrid } from './AchievementGrid';
 import { DailyChallenge } from './DailyChallenge';
+import { ProgramCard } from '../programs/ProgramCard';
 
 interface DashboardProps {
   onPlay: () => void;
   onDailyChallenge: (challenge: DailyChallengeType) => void;
+  onTutorial: () => void;
+  onNavigate: (view: string) => void;
+  onProgramPlay: (settings: GameSettings, programId: string) => void;
 }
 
-export function Dashboard({ onPlay, onDailyChallenge }: DashboardProps) {
+export function Dashboard({ onPlay, onDailyChallenge, onTutorial, onNavigate, onProgramPlay }: DashboardProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<StatsData | null>(null);
   const [challenge, setChallenge] = useState<DailyChallengeType | null>(null);
   const [achievements, setAchievements] = useState<UserAchievementType[]>([]);
+  const [activeProgram, setActiveProgram] = useState<TrainingProgramRecord | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,6 +37,15 @@ export function Dashboard({ onPlay, onDailyChallenge }: DashboardProps) {
         setStats(s);
         setChallenge(c);
         setAchievements(a);
+
+        // Load active program
+        try {
+          const programsData = await getPrograms();
+          const active = programsData.programs.find((p: TrainingProgramRecord) => p.status === 'active');
+          if (active) setActiveProgram(active);
+        } catch {
+          // ignore if not signed in
+        }
       } catch {
         // User may not be signed in
       } finally {
@@ -69,8 +83,36 @@ export function Dashboard({ onPlay, onDailyChallenge }: DashboardProps) {
     );
   }
 
+  const showTutorialPrompt = stats?.totalSessions === 0 && !localStorage.getItem('unreel-tutorial-seen');
+
   return (
     <div className="max-w-lg mx-auto space-y-4 py-6 px-4">
+      {/* Tutorial Prompt for new users */}
+      {showTutorialPrompt && (
+        <button
+          onClick={onTutorial}
+          className="w-full card border-primary-500/50 bg-primary-950/30 hover:bg-primary-900/30 transition-colors text-left"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-xs text-primary-400 font-semibold uppercase tracking-wider mb-1">
+                New here?
+              </div>
+              <div className="font-bold text-lg">Learn How to Play</div>
+              <div className="text-sm text-gray-400 mt-1">A guided walkthrough of the N-Back task</div>
+            </div>
+            <svg className="w-8 h-8 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+        </button>
+      )}
+
+      {/* Active Program Card */}
+      {activeProgram && (
+        <ProgramCard program={activeProgram} onContinue={onProgramPlay} />
+      )}
+
       {/* Play Button */}
       <button
         onClick={onPlay}
@@ -143,6 +185,22 @@ export function Dashboard({ onPlay, onDailyChallenge }: DashboardProps) {
 
       {/* Achievements */}
       <AchievementGrid userAchievements={achievements} />
+
+      {/* Quick Links */}
+      <div className="flex gap-3">
+        <button
+          onClick={onTutorial}
+          className="btn-secondary flex-1 text-sm py-3"
+        >
+          How to Play
+        </button>
+        <button
+          onClick={() => onNavigate('programs')}
+          className="btn-secondary flex-1 text-sm py-3"
+        >
+          Training Programs
+        </button>
+      </div>
     </div>
   );
 }
