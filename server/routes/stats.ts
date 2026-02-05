@@ -240,26 +240,50 @@ router.get('/debug/streak', async (_req: Request, res: Response) => {
       },
     });
 
+    // Get recent sessions for each profile to see play dates
+    const profilesWithSessions = await Promise.all(profiles.map(async (p) => {
+      const sessions = await prisma.session.findMany({
+        where: { userId: p.id },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: { createdAt: true },
+      });
+      const sessionDatesUTC = sessions.map(s => s.createdAt.toISOString());
+      const sessionDatesToronto = sessions.map(s => {
+        try { return formatDateInTz(s.createdAt, 'America/Toronto'); }
+        catch { return formatDateInTz(s.createdAt, 'UTC'); }
+      });
+      // Also format lastPlayedAt in Toronto tz
+      const lastPlayedFormatted = p.lastPlayedAt
+        ? (() => { try { return formatDateInTz(p.lastPlayedAt, 'America/Toronto'); } catch { return formatDateInTz(p.lastPlayedAt, 'UTC'); } })()
+        : null;
+      const lastPlayedType = p.lastPlayedAt === null ? 'null' : `${typeof p.lastPlayedAt} isDate=${p.lastPlayedAt instanceof Date}`;
+      return { ...p, lastPlayedFormatted, lastPlayedType, sessionDatesUTC, sessionDatesToronto };
+    }));
+
     const now = new Date();
+    const todayToronto = formatDateInTz(now, 'America/Toronto');
+    const yesterdayToronto = getYesterdayStr(todayToronto);
+
     const tzTest = {
       utcNow: now.toISOString(),
       formatUTC: formatDateInTz(now, 'UTC'),
-      formatToronto: (() => { try { return formatDateInTz(now, 'America/Toronto'); } catch (e) { return `ERROR: ${e}`; } })(),
-      formatNewYork: (() => { try { return formatDateInTz(now, 'America/New_York'); } catch (e) { return `ERROR: ${e}`; } })(),
+      formatToronto: todayToronto,
+      yesterdayToronto,
     };
 
     // Test if Intl timezone actually works or silently falls back
     const tzActuallyWorks = (() => {
       try {
-        const utcParts = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', hour: 'numeric', hour12: false }).format(now);
-        const estParts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Toronto', hour: 'numeric', hour12: false }).format(now);
-        return { utcHour: utcParts, torontoHour: estParts, same: utcParts === estParts };
+        const utcHour = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', hour: 'numeric', hour12: false }).format(now);
+        const torontoHour = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Toronto', hour: 'numeric', hour12: false }).format(now);
+        return { utcHour, torontoHour, same: utcHour === torontoHour };
       } catch (e) {
         return { error: String(e) };
       }
     })();
 
-    res.json({ profiles, tzTest, tzActuallyWorks });
+    res.json({ profiles: profilesWithSessions, tzTest, tzActuallyWorks });
   } catch (err) {
     res.status(500).json({ error: String(err) });
   }
