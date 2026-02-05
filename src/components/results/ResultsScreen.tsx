@@ -20,6 +20,7 @@ interface ResultsScreenProps {
   onPlayAgain: () => void;
   onBackToMenu: () => void;
   onNextProgramSession?: (settings: GameSettings, programId: string) => void;
+  onStreakUpdate?: (streak: number) => void;
 }
 
 export function ResultsScreen({
@@ -35,6 +36,7 @@ export function ResultsScreen({
   onPlayAgain,
   onBackToMenu,
   onNextProgramSession,
+  onStreakUpdate,
 }: ResultsScreenProps) {
   const [saveState, setSaveState] = useState<'saving' | 'saved' | 'error' | 'offline'>('saving');
   const [serverXP, setServerXP] = useState(xpEarned);
@@ -54,6 +56,7 @@ export function ResultsScreen({
         setServerXP(response.xpEarned);
         setIsFirstPlay(response.isFirstPlayToday);
         setLeveledUp(response.leveledUp);
+        onStreakUpdate?.(response.newStreak);
 
         const achievements = response.newAchievements
           .map((id: string) => getAchievementDef(id))

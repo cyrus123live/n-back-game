@@ -147,6 +147,7 @@ export default function App() {
               setView('dashboard');
             }}
             onNextProgramSession={handleProgramPlay}
+            onStreakUpdate={setCurrentStreak}
           />
         )}
 
