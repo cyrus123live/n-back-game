@@ -14,7 +14,7 @@ export function useAudio() {
     if ('speechSynthesis' in window) {
       // Cancel any pending speech
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(letter);
+      const utterance = new SpeechSynthesisUtterance(letter.toLowerCase());
       utterance.rate = 1.2;
       utterance.pitch = 1.0;
       utterance.volume = 0.8;
