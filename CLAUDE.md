@@ -78,6 +78,7 @@ Session has optional adaptive fields: `adaptive`, `startingLevel`, `endingLevel`
 - All API calls use `cache: 'no-store'` to prevent browser caching of stale profile/stats data
 - CompactStatsCard combines level/rank, streak, total sessions, XP bar, and 12-week activity heatmap into one card
 - History screen shows chart, avg-by-type, achievements, and session list
+- `server/lib/dates.ts` uses `formatToParts()` with `en-US` locale (not `en-CA`) because `node:20-alpine` ships with `small-icu` which only includes `en-US` — other locales silently fall back to wrong date formats
 
 ## Git
 
