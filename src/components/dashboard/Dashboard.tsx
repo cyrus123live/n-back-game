@@ -106,6 +106,10 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
         {/* Inline Settings */}
         {renderSettings()}
 
+        <button onClick={onTutorial} className="btn-secondary w-full text-sm py-3">
+          How to Play
+        </button>
+
         <p className="text-sm text-gray-500 text-center">Sign in to track progress, earn XP, and unlock achievements</p>
       </div>
     );

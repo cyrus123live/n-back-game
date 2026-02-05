@@ -156,6 +156,7 @@ router.post('/', async (req: Request, res: Response) => {
     res.json({
       session,
       xpEarned: finalXp,
+      totalXp: newTotalXp,
       isFirstPlayToday,
       newLevel,
       leveledUp,

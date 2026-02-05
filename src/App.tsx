@@ -12,7 +12,9 @@ import { ProgramsScreen } from './components/programs/ProgramsScreen';
 type View = 'dashboard' | 'game' | 'results' | 'history' | 'tutorial' | 'programs';
 
 export default function App() {
-  const [view, setView] = useState<View>('dashboard');
+  const [view, setView] = useState<View>(() =>
+    localStorage.getItem('unreel-tutorial-seen') ? 'dashboard' : 'tutorial'
+  );
   const [currentStreak, setCurrentStreak] = useState(0);
   const [gameSettings, setGameSettings] = useState<GameSettings | null>(null);
   const [gameResults, setGameResults] = useState<{

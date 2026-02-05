@@ -77,6 +77,7 @@ export interface SessionRecord {
 export interface SessionSaveResponse {
   session: SessionRecord;
   xpEarned: number;
+  totalXp: number;
   isFirstPlayToday: boolean;
   newLevel: number;
   leveledUp: boolean;

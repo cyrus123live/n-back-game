@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import type { SessionResults, GameSettings, AchievementDef, ProgramSessionResult } from '../../types';
 import { calculateAccuracy } from '../../lib/scoring';
-import { STIMULUS_LABELS, STIMULUS_COLORS, getAchievementDef } from '../../lib/constants';
+import { STIMULUS_LABELS, STIMULUS_COLORS, getAchievementDef, getRank, getLevelThresholds } from '../../lib/constants';
 import { XPAnimation } from './XPAnimation';
 import { saveSession, completeProgramSession } from '../../lib/api';
 import { getTemplate } from '../../lib/programs';
@@ -44,6 +44,14 @@ export function ResultsScreen({
   const [leveledUp, setLeveledUp] = useState(false);
   const [newAchievements, setNewAchievements] = useState<AchievementDef[]>([]);
   const [programResult, setProgramResult] = useState<ProgramSessionResult | null>(null);
+  const [xpBarData, setXpBarData] = useState<{
+    oldProgress: number;
+    newProgress: number;
+    level: number;
+    currentLevelXp: number;
+    nextLevelXp: number;
+    totalXp: number;
+  } | null>(null);
   const confettiFired = useRef(false);
 
   useEffect(() => {
@@ -57,6 +65,40 @@ export function ResultsScreen({
         setIsFirstPlay(response.isFirstPlayToday);
         setLeveledUp(response.leveledUp);
         onStreakUpdate?.(response.newStreak);
+
+        // Compute XP bar animation data
+        if (response.totalXp != null) {
+          const thresholds = getLevelThresholds();
+          const newLevel = response.newLevel;
+          const totalXp = response.totalXp;
+          const oldTotalXp = totalXp - response.xpEarned;
+          const currentThreshold = thresholds[newLevel - 1] || 0;
+          const nextThreshold = thresholds[newLevel] || thresholds[thresholds.length - 1];
+          const levelXpRange = nextThreshold - currentThreshold;
+          const newLevelXp = totalXp - currentThreshold;
+
+          // If level changed, animate from 0 to new progress
+          const oldLevel = response.leveledUp
+            ? newLevel - 1
+            : newLevel;
+          const oldThreshold = thresholds[oldLevel - 1] || 0;
+          const oldNextThreshold = thresholds[oldLevel] || thresholds[thresholds.length - 1];
+          const oldLevelRange = oldNextThreshold - oldThreshold;
+          const oldLevelXp = oldTotalXp - oldThreshold;
+          const oldProgress = response.leveledUp
+            ? 0
+            : oldLevelRange > 0 ? (oldLevelXp / oldLevelRange) * 100 : 100;
+          const newProgress = levelXpRange > 0 ? (newLevelXp / levelXpRange) * 100 : 100;
+
+          setXpBarData({
+            oldProgress,
+            newProgress,
+            level: newLevel,
+            currentLevelXp: newLevelXp,
+            nextLevelXp: levelXpRange,
+            totalXp,
+          });
+        }
 
         const achievements = response.newAchievements
           .map((id: string) => getAchievementDef(id))
@@ -135,6 +177,11 @@ export function ResultsScreen({
       <div className="flex justify-center">
         <XPAnimation xp={serverXP} isFirstPlayToday={isFirstPlay} />
       </div>
+
+      {/* XP Level Bar */}
+      {xpBarData && (
+        <XPLevelBar data={xpBarData} />
+      )}
 
       {/* Level Up */}
       {leveledUp && (
@@ -333,6 +380,42 @@ export function ResultsScreen({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function XPLevelBar({ data }: { data: { oldProgress: number; newProgress: number; level: number; currentLevelXp: number; nextLevelXp: number; totalXp: number } }) {
+  const [progress, setProgress] = useState(data.oldProgress);
+  const rank = getRank(data.level);
+
+  useEffect(() => {
+    // Trigger animation after mount
+    const timer = setTimeout(() => setProgress(data.newProgress), 400);
+    return () => clearTimeout(timer);
+  }, [data.newProgress]);
+
+  return (
+    <div className="card">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-bold" style={{ color: rank.color }}>
+          Lv {data.level} {rank.name}
+        </span>
+        <span className="text-xs text-gray-500">
+          {data.totalXp.toLocaleString()} total XP
+        </span>
+      </div>
+      <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-1000 ease-out"
+          style={{
+            width: `${Math.min(progress, 100)}%`,
+            backgroundColor: rank.color,
+          }}
+        />
+      </div>
+      <div className="text-xs text-gray-500 mt-1">
+        {data.currentLevelXp} / {data.nextLevelXp} XP to next level
+      </div>
     </div>
   );
 }
