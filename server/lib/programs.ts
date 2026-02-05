@@ -16,27 +16,25 @@ export const SKIP_THRESHOLD = 0.9;
 // Used to compute skip targets when a user scores above SKIP_THRESHOLD
 const TEMPLATE_PHASES: Record<string, [number, number, string][]> = {
   beginner: [
-    [1, 2, 'audio,position'],
-    [6, 2, 'audio,color,position'],
-    [11, 3, 'audio,position'],
-    [16, 3, 'audio,color,position'],
+    [1, 2, 'color,position'],
+    [6, 2, 'color,position,shape'],
+    [11, 3, 'color,position'],
+    [16, 3, 'color,position,shape'],
   ],
   intermediate: [
-    [1, 3, 'audio,position'],
-    [2, 3, 'audio,color,position'],
-    [4, 3, 'audio,color,position,shape'],
-    [8, 4, 'audio,position'],
-    [12, 4, 'audio,color,position'],
-    [16, 4, 'audio,color,position,shape'],
+    [1, 3, 'color,position'],
+    [2, 3, 'color,position,shape'],
+    [4, 3, 'color,number,position,shape'],
+    [8, 4, 'color,position'],
+    [12, 4, 'color,position,shape'],
+    [16, 4, 'color,number,position,shape'],
   ],
   advanced: [
-    [1, 4, 'audio,color,position'],
-    [2, 4, 'audio,color,position,shape'],
-    [3, 4, 'audio,color,number,position,shape'],
-    [7, 5, 'audio,position'],
-    [10, 5, 'audio,color,position'],
-    [12, 5, 'audio,color,position,shape'],
-    [16, 5, 'audio,color,number,position,shape'],
+    [1, 4, 'color,position,shape'],
+    [2, 4, 'color,number,position,shape'],
+    [7, 5, 'color,position'],
+    [10, 5, 'color,position,shape'],
+    [13, 5, 'color,number,position,shape'],
   ],
 };
 
