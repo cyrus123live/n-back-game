@@ -95,9 +95,26 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
     }, 300);
   }, [currentTrial, pressedThisTrial, sequence]);
 
+  const handleMatch = useCallback((type: StimulusType) => {
+    if (pressedThisTrial.has(type)) return;
+    setPressedThisTrial((prev) => new Set(prev).add(type));
+
+    // If current step is waiting for this key, advance the step
+    if (currentStep?.waitForKey === type) {
+      setStepIndex((prev) => prev + 1);
+      setPaused(false);
+    }
+  }, [pressedThisTrial, currentStep]);
+
   const handleNextStep = useCallback(() => {
     const step = TUTORIAL_STEPS[stepIndex];
     if (!step) return;
+
+    // If this step waits for a key, simulate the match via the button
+    if (step.waitForKey) {
+      handleMatch(step.waitForKey);
+      return;
+    }
 
     if (step.phase === 'before') {
       // Show the stimulus now
@@ -117,18 +134,7 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
       setStepIndex(stepIndex + 1);
       setPaused(false);
     }
-  }, [stepIndex]);
-
-  const handleMatch = useCallback((type: StimulusType) => {
-    if (pressedThisTrial.has(type)) return;
-    setPressedThisTrial((prev) => new Set(prev).add(type));
-
-    // If current step is waiting for this key, advance the step
-    if (currentStep?.waitForKey === type) {
-      setStepIndex((prev) => prev + 1);
-      setPaused(false);
-    }
-  }, [pressedThisTrial, currentStep]);
+  }, [stepIndex, handleMatch]);
 
   // Key handler
   useEffect(() => {

@@ -130,7 +130,7 @@ export function ProgramsScreen({ onBack, onStartSession }: ProgramsScreenProps) 
                       </div>
                     )}
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {todaySession && (
                         <button
                           onClick={() => onStartSession(
@@ -143,20 +143,20 @@ export function ProgramsScreen({ onBack, onStartSession }: ProgramsScreenProps) 
                             },
                             program.id
                           )}
-                          className="btn-primary flex-1"
+                          className="btn-primary flex-1 min-w-0"
                         >
                           Start Day {program.currentDay}
                         </button>
                       )}
                       <button
                         onClick={() => setExpandedTemplate(isExpanded ? null : `active-${program.id}`)}
-                        className="btn-secondary px-4"
+                        className="btn-secondary px-4 flex-shrink-0"
                       >
                         {isExpanded ? 'Hide' : 'Schedule'}
                       </button>
                       <button
                         onClick={() => setAbandonTarget(program.id)}
-                        className="text-gray-500 hover:text-red-400 px-3"
+                        className="text-gray-500 hover:text-red-400 px-3 flex-shrink-0 flex items-center"
                       >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -191,13 +191,13 @@ export function ProgramsScreen({ onBack, onStartSession }: ProgramsScreenProps) 
                   </div>
                   <p className="text-sm text-gray-400">{template.description}</p>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {activeForThis ? (
                       <span className="text-sm text-primary-400 py-2">Currently active</span>
                     ) : (
                       <button
                         onClick={() => handleEnroll(template.id)}
-                        className="btn-primary flex-1"
+                        className="btn-primary flex-1 min-w-0"
                         disabled={enrolling === template.id}
                       >
                         {enrolling === template.id ? 'Enrolling...' : 'Start Program'}
@@ -205,7 +205,7 @@ export function ProgramsScreen({ onBack, onStartSession }: ProgramsScreenProps) 
                     )}
                     <button
                       onClick={() => setExpandedTemplate(isExpanded ? null : template.id)}
-                      className="btn-secondary px-4"
+                      className="btn-secondary px-4 flex-shrink-0"
                     >
                       {isExpanded ? 'Hide' : 'View Schedule'}
                     </button>

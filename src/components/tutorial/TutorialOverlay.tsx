@@ -9,6 +9,8 @@ interface TutorialOverlayProps {
 }
 
 export function TutorialOverlay({ step, onNext, onSkip, stepIndex, totalSteps }: TutorialOverlayProps) {
+  const keyLabel = step.waitForKey === 'position' ? 'Position (A)' : 'Audio (L)';
+
   return (
     <div className="fixed inset-0 z-40 pointer-events-none">
       {/* Dim overlay */}
@@ -37,9 +39,12 @@ export function TutorialOverlay({ step, onNext, onSkip, stepIndex, totalSteps }:
                 {stepIndex === totalSteps - 1 ? 'Start Practice' : 'Got it'}
               </button>
             ) : (
-              <span className="text-xs text-primary-400 animate-pulse">
-                Press {step.waitForKey === 'position' ? 'A' : 'L'} to continue
-              </span>
+              <button
+                onClick={onNext}
+                className="btn-primary text-sm px-4 py-2 animate-pulse"
+              >
+                {keyLabel}
+              </button>
             )}
           </div>
         </div>

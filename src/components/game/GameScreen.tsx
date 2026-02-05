@@ -20,7 +20,6 @@ interface GameScreenProps {
       adaptive: boolean;
       startingLevel: number;
       endingLevel: number;
-      levelChanges: { trial: number; fromLevel: number; toLevel: number }[];
     }
   ) => void;
   onCancel: () => void;
@@ -67,9 +66,7 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
     overallScore,
     xpEarned,
     countdown,
-    adaptiveLevel,
     adaptiveData,
-    levelChangeNotification,
   } = useGameLoop(handleTrialAdvance);
 
   // Start game on mount
@@ -103,12 +100,21 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
 
   const handleMatch = useCallback(
     (type: StimulusType) => {
-      if (pressedThisTrial.has(type)) return;
-      respondMatch(type);
-      setPressedThisTrial((prev) => new Set(prev).add(type));
-      playComboTone(gameState.combo);
+      const wasPressed = respondMatch(type);
+      if (wasPressed) {
+        // Toggled off
+        setPressedThisTrial((prev) => {
+          const next = new Set(prev);
+          next.delete(type);
+          return next;
+        });
+      } else {
+        // Toggled on
+        setPressedThisTrial((prev) => new Set(prev).add(type));
+        playComboTone(gameState.combo);
+      }
     },
-    [respondMatch, pressedThisTrial, playComboTone, gameState.combo]
+    [respondMatch, playComboTone, gameState.combo]
   );
 
   useKeyboard(settings.activeStimuli, handleMatch, gameState.phase === 'playing');
@@ -144,17 +150,8 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
       <TrialProgress
         current={gameState.currentTrial}
         total={gameState.sequence.length}
-        nLevel={settings.adaptive ? adaptiveLevel : settings.nLevel}
+        nLevel={settings.nLevel}
       />
-
-      {/* Adaptive level change notification */}
-      {levelChangeNotification && (
-        <div className="level-change-notification text-center">
-          <span className={`text-lg font-bold ${levelChangeNotification.direction === 'up' ? 'text-green-400' : 'text-orange-400'}`}>
-            Level {levelChangeNotification.direction === 'up' ? 'Up' : 'Down'}! {levelChangeNotification.level}-Back
-          </span>
-        </div>
-      )}
 
       <GameGrid
         stimulus={currentStimulus}

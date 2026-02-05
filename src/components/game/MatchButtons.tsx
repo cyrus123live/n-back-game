@@ -65,7 +65,7 @@ function MatchButton({
   return (
     <button
       onClick={() => onMatch(type)}
-      disabled={disabled || pressed}
+      disabled={disabled}
       className={`
         relative flex flex-col items-center gap-1 px-4 py-3 rounded-xl
         font-semibold text-sm transition-all duration-150 active:scale-95

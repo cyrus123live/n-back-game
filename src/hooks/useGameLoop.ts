@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import type { StimulusType, GameSettings, GameState, TrialStimulus, SessionResults, AdaptiveLevelChange } from '../types';
-import { generateSequence, generateTrials, isMatch } from '../lib/sequence';
-import { calculateResults, calculateAdaptiveResults, calculateOverallScore, calculateXP } from '../lib/scoring';
+import type { StimulusType, GameSettings, GameState, TrialStimulus, SessionResults } from '../types';
+import { generateSequence, isMatch } from '../lib/sequence';
+import { calculateResults, calculateOverallScore, calculateXP } from '../lib/scoring';
 
 const COUNTDOWN_SECONDS = 3;
 
@@ -9,22 +9,19 @@ interface AdaptiveData {
   adaptive: boolean;
   startingLevel: number;
   endingLevel: number;
-  levelChanges: AdaptiveLevelChange[];
 }
 
 interface UseGameLoopReturn {
   gameState: GameState;
   startGame: (settings: GameSettings) => void;
-  respondMatch: (type: StimulusType) => void;
+  respondMatch: (type: StimulusType) => boolean;
   currentStimulus: TrialStimulus | null;
   settings: GameSettings | null;
   results: SessionResults | null;
   overallScore: number;
   xpEarned: number;
   countdown: number;
-  adaptiveLevel: number;
   adaptiveData: AdaptiveData | null;
-  levelChangeNotification: { level: number; direction: 'up' | 'down' } | null;
 }
 
 export function useGameLoop(
@@ -46,17 +43,11 @@ export function useGameLoop(
   const [overallScore, setOverallScore] = useState(0);
   const [xpEarned, setXpEarned] = useState(0);
   const [countdown, setCountdown] = useState(0);
-  const [adaptiveLevel, setAdaptiveLevel] = useState(2);
   const [adaptiveData, setAdaptiveData] = useState<AdaptiveData | null>(null);
-  const [levelChangeNotification, setLevelChangeNotification] = useState<{ level: number; direction: 'up' | 'down' } | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const respondedThisTrialRef = useRef<Set<StimulusType>>(new Set());
-  const trialNLevelsRef = useRef<number[]>([]);
-  const levelChangesRef = useRef<AdaptiveLevelChange[]>([]);
-  const adaptiveLevelRef = useRef<number>(2);
-  const blockStartRef = useRef<number>(0);
 
   const cleanup = useCallback(() => {
     if (timerRef.current) {
@@ -82,11 +73,6 @@ export function useGameLoop(
       maxCombo: number,
       gameSettings: GameSettings
     ) => {
-      // Use per-trial n-level for adaptive mode
-      const currentNLevel = gameSettings.adaptive
-        ? trialNLevelsRef.current[currentTrial]
-        : gameSettings.nLevel;
-
       // Calculate feedback for the trial that just ended
       const trialResponses = responses.get(currentTrial) || new Set<StimulusType>();
       const feedback = new Map<StimulusType, 'hit' | 'miss' | 'falseAlarm' | 'correctRejection'>();
@@ -94,7 +80,7 @@ export function useGameLoop(
       let anyWrong = false;
 
       for (const type of gameSettings.activeStimuli) {
-        const wasMatch = isMatch(sequence, currentTrial, currentNLevel, type);
+        const wasMatch = isMatch(sequence, currentTrial, gameSettings.nLevel, type);
         const playerResponded = trialResponses.has(type);
 
         if (wasMatch && playerResponded) {
@@ -114,7 +100,7 @@ export function useGameLoop(
 
       // Update combo
       let newCombo = combo;
-      if (currentTrial >= currentNLevel) {
+      if (currentTrial >= gameSettings.nLevel) {
         if (!anyWrong && anyCorrect) {
           newCombo = combo + 1;
         } else if (anyWrong) {
@@ -126,104 +112,30 @@ export function useGameLoop(
       // Fire callback
       onTrialAdvance?.(feedback);
 
-      // Adaptive: check if block is complete
-      let updatedSequence = sequence;
-      if (gameSettings.adaptive && currentTrial >= currentNLevel) {
-        const blockSize = adaptiveLevelRef.current;
-        const scorableTrialsInBlock = currentTrial - blockStartRef.current + 1;
-
-        if (scorableTrialsInBlock >= blockSize) {
-          // Calculate block accuracy
-          let blockHits = 0;
-          let blockTotal = 0;
-          for (let i = blockStartRef.current; i <= currentTrial; i++) {
-            const trialN = trialNLevelsRef.current[i];
-            if (i < trialN) continue;
-            for (const type of gameSettings.activeStimuli) {
-              const wasMatch = isMatch(sequence, i, trialN, type);
-              const responded = responses.get(i)?.has(type) ?? false;
-              if (wasMatch || responded) {
-                blockTotal++;
-                if (wasMatch && responded) blockHits++;
-              }
-            }
-          }
-
-          const blockAccuracy = blockTotal > 0 ? blockHits / blockTotal : 0;
-          const oldLevel = adaptiveLevelRef.current;
-          let newLevel = oldLevel;
-
-          if (blockAccuracy >= 0.85 && oldLevel < 9) {
-            newLevel = oldLevel + 1;
-          } else if (blockAccuracy <= 0.5 && oldLevel > 1) {
-            newLevel = oldLevel - 1;
-          }
-
-          if (newLevel !== oldLevel) {
-            adaptiveLevelRef.current = newLevel;
-            setAdaptiveLevel(newLevel);
-            levelChangesRef.current.push({
-              trial: currentTrial,
-              fromLevel: oldLevel,
-              toLevel: newLevel,
-            });
-
-            // Show notification
-            setLevelChangeNotification({
-              level: newLevel,
-              direction: newLevel > oldLevel ? 'up' : 'down',
-            });
-            setTimeout(() => setLevelChangeNotification(null), 2000);
-
-            // Regenerate remaining trials
-            const nextTrial = currentTrial + 1;
-            const remaining = gameSettings.trialCount - nextTrial;
-            if (remaining > 0) {
-              const kept = sequence.slice(0, nextTrial);
-              const newTrials = generateTrials(
-                kept,
-                nextTrial,
-                remaining,
-                newLevel,
-                gameSettings.activeStimuli
-              );
-              updatedSequence = [...kept, ...newTrials];
-
-              // Update trialNLevels for new trials
-              for (let i = nextTrial; i < gameSettings.trialCount; i++) {
-                trialNLevelsRef.current[i] = newLevel;
-              }
-            }
-          }
-
-          blockStartRef.current = currentTrial + 1;
-        }
-      }
-
       const nextTrial = currentTrial + 1;
 
-      if (nextTrial >= updatedSequence.length) {
+      if (nextTrial >= sequence.length) {
         // Game over
         cleanup();
+        const finalResults = calculateResults(sequence, responses, gameSettings.nLevel, gameSettings.activeStimuli);
+        const score = calculateOverallScore(finalResults);
+        const effectiveNLevel = gameSettings.nLevel;
+        const xp = calculateXP(effectiveNLevel, score, newMaxCombo);
 
-        let finalResults: SessionResults;
-        let effectiveNLevel: number;
+        // Adaptive: compute recommended next level based on session accuracy
         if (gameSettings.adaptive) {
-          finalResults = calculateAdaptiveResults(updatedSequence, responses, trialNLevelsRef.current, gameSettings.activeStimuli);
-          effectiveNLevel = adaptiveLevelRef.current;
+          let recommendedLevel = effectiveNLevel;
+          if (score >= 0.85 && effectiveNLevel < 9) {
+            recommendedLevel = effectiveNLevel + 1;
+          } else if (score <= 0.5 && effectiveNLevel > 1) {
+            recommendedLevel = effectiveNLevel - 1;
+          }
           setAdaptiveData({
             adaptive: true,
-            startingLevel: gameSettings.nLevel,
-            endingLevel: effectiveNLevel,
-            levelChanges: [...levelChangesRef.current],
+            startingLevel: effectiveNLevel,
+            endingLevel: recommendedLevel,
           });
-        } else {
-          finalResults = calculateResults(updatedSequence, responses, gameSettings.nLevel, gameSettings.activeStimuli);
-          effectiveNLevel = gameSettings.nLevel;
         }
-
-        const score = calculateOverallScore(finalResults);
-        const xp = calculateXP(effectiveNLevel, score, newMaxCombo);
 
         setResults(finalResults);
         setOverallScore(score);
@@ -234,7 +146,6 @@ export function useGameLoop(
           combo: newCombo,
           maxCombo: newMaxCombo,
           trialFeedback: feedback,
-          sequence: updatedSequence,
         }));
         return;
       }
@@ -247,7 +158,6 @@ export function useGameLoop(
         maxCombo: newMaxCombo,
         feedbackType: anyWrong ? 'incorrect' : anyCorrect ? 'correct' : null,
         trialFeedback: feedback,
-        sequence: updatedSequence,
       }));
 
       respondedThisTrialRef.current = new Set();
@@ -265,7 +175,7 @@ export function useGameLoop(
         // Schedule next advance
         timerRef.current = setTimeout(() => {
           setGameState((current) => {
-            advanceTrial(nextTrial, current.sequence, current.responses, current.combo, current.maxCombo, gameSettings);
+            advanceTrial(nextTrial, sequence, current.responses, current.combo, current.maxCombo, gameSettings);
             return current;
           });
         }, gameSettings.intervalMs);
@@ -282,17 +192,7 @@ export function useGameLoop(
       setOverallScore(0);
       setXpEarned(0);
       setAdaptiveData(null);
-      setLevelChangeNotification(null);
       respondedThisTrialRef.current = new Set();
-
-      // Initialize adaptive state
-      if (gameSettings.adaptive) {
-        adaptiveLevelRef.current = gameSettings.nLevel;
-        setAdaptiveLevel(gameSettings.nLevel);
-        trialNLevelsRef.current = new Array(gameSettings.trialCount).fill(gameSettings.nLevel);
-        levelChangesRef.current = [];
-        blockStartRef.current = gameSettings.nLevel; // First scorable trial
-      }
 
       const sequence = generateSequence(
         gameSettings.trialCount,
@@ -341,23 +241,34 @@ export function useGameLoop(
   );
 
   const respondMatch = useCallback(
-    (type: StimulusType) => {
-      if (gameState.phase !== 'playing') return;
-      if (respondedThisTrialRef.current.has(type)) return;
+    (type: StimulusType): boolean => {
+      if (gameState.phase !== 'playing') return false;
 
-      respondedThisTrialRef.current.add(type);
+      const alreadyPressed = respondedThisTrialRef.current.has(type);
 
-      setGameState((prev) => {
-        const newResponses = new Map(prev.responses);
-        const trialResponses = new Set(newResponses.get(prev.currentTrial) || []);
-        trialResponses.add(type);
-        newResponses.set(prev.currentTrial, trialResponses);
+      if (alreadyPressed) {
+        // Toggle off
+        respondedThisTrialRef.current.delete(type);
+        setGameState((prev) => {
+          const newResponses = new Map(prev.responses);
+          const trialResponses = new Set(newResponses.get(prev.currentTrial) || []);
+          trialResponses.delete(type);
+          newResponses.set(prev.currentTrial, trialResponses);
+          return { ...prev, responses: newResponses };
+        });
+      } else {
+        // Toggle on
+        respondedThisTrialRef.current.add(type);
+        setGameState((prev) => {
+          const newResponses = new Map(prev.responses);
+          const trialResponses = new Set(newResponses.get(prev.currentTrial) || []);
+          trialResponses.add(type);
+          newResponses.set(prev.currentTrial, trialResponses);
+          return { ...prev, responses: newResponses };
+        });
+      }
 
-        return {
-          ...prev,
-          responses: newResponses,
-        };
-      });
+      return alreadyPressed;
     },
     [gameState.phase]
   );
@@ -376,8 +287,6 @@ export function useGameLoop(
     overallScore,
     xpEarned,
     countdown,
-    adaptiveLevel,
     adaptiveData,
-    levelChangeNotification,
   };
 }

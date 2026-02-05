@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import confetti from 'canvas-confetti';
-import type { SessionResults, GameSettings, AchievementDef, AdaptiveLevelChange } from '../../types';
+import type { SessionResults, GameSettings, AchievementDef } from '../../types';
 import { calculateAccuracy } from '../../lib/scoring';
 import { STIMULUS_LABELS, STIMULUS_COLORS, getAchievementDef } from '../../lib/constants';
 import { XPAnimation } from './XPAnimation';
@@ -15,7 +15,6 @@ interface ResultsScreenProps {
   adaptive?: boolean;
   startingLevel?: number;
   endingLevel?: number;
-  levelChanges?: AdaptiveLevelChange[];
   activeProgramId?: string | null;
   onPlayAgain: () => void;
   onBackToMenu: () => void;
@@ -30,7 +29,6 @@ export function ResultsScreen({
   adaptive,
   startingLevel,
   endingLevel,
-  levelChanges,
   activeProgramId,
   onPlayAgain,
   onBackToMenu,
@@ -47,7 +45,7 @@ export function ResultsScreen({
       try {
         const response = await saveSession(
           settings, results, overallScore, xpEarned, maxCombo,
-          adaptive ? { adaptive: true, startingLevel, endingLevel, levelChanges } : undefined
+          adaptive ? { adaptive: true, startingLevel, endingLevel } : undefined
         );
         setServerXP(response.xpEarned);
         setIsFirstPlay(response.isFirstPlayToday);
@@ -137,31 +135,26 @@ export function ResultsScreen({
         </div>
       )}
 
-      {/* Adaptive Journey */}
+      {/* Adaptive Recommendation */}
       {adaptive && startingLevel != null && endingLevel != null && (
         <div className="card space-y-2">
           <div className="flex items-center gap-2">
             <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded">Adaptive Mode</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-400 text-sm">Starting Level</span>
+            <span className="text-gray-400 text-sm">This Session</span>
             <span className="font-bold">{startingLevel}-Back</span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-400 text-sm">Ending Level</span>
-            <span className="font-bold text-primary-400">{endingLevel}-Back</span>
-          </div>
-          {levelChanges && levelChanges.length > 0 && (
-            <div className="pt-2 border-t border-gray-700">
-              <p className="text-xs text-gray-500 mb-1">Level Changes</p>
-              {levelChanges.map((change, i) => (
-                <p key={i} className="text-xs text-gray-400">
-                  Trial {change.trial + 1}: {change.fromLevel} → {change.toLevel}
-                  <span className={change.toLevel > change.fromLevel ? 'text-green-400 ml-1' : 'text-orange-400 ml-1'}>
-                    {change.toLevel > change.fromLevel ? '(up)' : '(down)'}
-                  </span>
-                </p>
-              ))}
+          {endingLevel !== startingLevel ? (
+            <div className="flex items-center justify-between">
+              <span className="text-gray-400 text-sm">Next Session</span>
+              <span className={`font-bold ${endingLevel > startingLevel ? 'text-green-400' : 'text-orange-400'}`}>
+                {endingLevel}-Back {endingLevel > startingLevel ? '(level up)' : '(level down)'}
+              </span>
+            </div>
+          ) : (
+            <div className="text-sm text-gray-500">
+              Level stays at {startingLevel}-Back for next session
             </div>
           )}
         </div>

@@ -1,13 +1,38 @@
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
+
+// Module-level singleton so it persists and can be unlocked once
+let sharedAudioContext: AudioContext | null = null;
+
+function getSharedContext(): AudioContext {
+  if (!sharedAudioContext) {
+    sharedAudioContext = new AudioContext();
+  }
+  if (sharedAudioContext.state === 'suspended') {
+    sharedAudioContext.resume();
+  }
+  return sharedAudioContext;
+}
+
+// Unlock audio on first user interaction anywhere on the page
+function setupGlobalUnlock() {
+  const unlock = () => {
+    getSharedContext();
+    document.removeEventListener('click', unlock);
+    document.removeEventListener('touchstart', unlock);
+    document.removeEventListener('keydown', unlock);
+  };
+  document.addEventListener('click', unlock, { once: true });
+  document.addEventListener('touchstart', unlock, { once: true });
+  document.addEventListener('keydown', unlock, { once: true });
+}
+
+if (typeof document !== 'undefined') {
+  setupGlobalUnlock();
+}
 
 export function useAudio() {
-  const audioContextRef = useRef<AudioContext | null>(null);
-
   const getContext = useCallback(() => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new AudioContext();
-    }
-    return audioContextRef.current;
+    return getSharedContext();
   }, []);
 
   const speakLetter = useCallback((letter: string) => {
@@ -15,7 +40,7 @@ export function useAudio() {
       // Cancel any pending speech
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(letter.toLowerCase());
-      utterance.rate = 1.2;
+      utterance.rate = 0.9;
       utterance.pitch = 1.0;
       utterance.volume = 0.8;
       window.speechSynthesis.speak(utterance);

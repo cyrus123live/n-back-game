@@ -24,7 +24,6 @@ export default function App() {
     adaptive?: boolean;
     startingLevel?: number;
     endingLevel?: number;
-    levelChanges?: { trial: number; fromLevel: number; toLevel: number }[];
   } | null>(null);
   const [activeProgramId, setActiveProgramId] = useState<string | null>(null);
 
@@ -63,7 +62,6 @@ export default function App() {
         adaptive: boolean;
         startingLevel: number;
         endingLevel: number;
-        levelChanges: { trial: number; fromLevel: number; toLevel: number }[];
       }
     ) => {
       setGameResults({ results, overallScore, xpEarned, maxCombo, ...adaptiveData });
@@ -84,10 +82,14 @@ export default function App() {
 
   const handlePlayAgain = useCallback(() => {
     if (gameSettings) {
+      // If adaptive, use the recommended next level
+      if (gameResults?.adaptive && gameResults.endingLevel) {
+        setGameSettings({ ...gameSettings, nLevel: gameResults.endingLevel });
+      }
       setGameResults(null);
       setView('game');
     }
-  }, [gameSettings]);
+  }, [gameSettings, gameResults]);
 
   const handleNavigate = useCallback((target: string) => {
     setView(target as View);
@@ -150,7 +152,6 @@ export default function App() {
             adaptive={gameResults.adaptive}
             startingLevel={gameResults.startingLevel}
             endingLevel={gameResults.endingLevel}
-            levelChanges={gameResults.levelChanges}
             activeProgramId={activeProgramId}
             onPlayAgain={handlePlayAgain}
             onBackToMenu={() => {
