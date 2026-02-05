@@ -3,14 +3,13 @@ import type { GameSettings, SessionResults, DailyChallenge } from './types';
 import { getProfile } from './lib/api';
 import { Navbar } from './components/layout/Navbar';
 import { Dashboard } from './components/dashboard/Dashboard';
-import { SettingsScreen } from './components/settings/SettingsScreen';
 import { GameScreen } from './components/game/GameScreen';
 import { ResultsScreen } from './components/results/ResultsScreen';
 import { HistoryScreen } from './components/history/HistoryScreen';
 import { TutorialScreen } from './components/tutorial/TutorialScreen';
 import { ProgramsScreen } from './components/programs/ProgramsScreen';
 
-type View = 'dashboard' | 'settings' | 'game' | 'results' | 'history' | 'tutorial' | 'programs';
+type View = 'dashboard' | 'game' | 'results' | 'history' | 'tutorial' | 'programs';
 
 export default function App() {
   const [view, setView] = useState<View>('dashboard');
@@ -32,10 +31,6 @@ export default function App() {
       .then((p) => setCurrentStreak(p.currentStreak))
       .catch(() => {});
   }, [view]);
-
-  const handlePlay = useCallback(() => {
-    setView('settings');
-  }, []);
 
   const handleDailyChallenge = useCallback((challenge: DailyChallenge) => {
     setGameSettings({
@@ -108,18 +103,11 @@ export default function App() {
       <main>
         {view === 'dashboard' && (
           <Dashboard
-            onPlay={handlePlay}
+            onStart={handleStartGame}
             onDailyChallenge={handleDailyChallenge}
             onTutorial={handleTutorial}
             onNavigate={handleNavigate}
             onProgramPlay={handleProgramPlay}
-          />
-        )}
-
-        {view === 'settings' && (
-          <SettingsScreen
-            onStart={handleStartGame}
-            onBack={() => setView('dashboard')}
           />
         )}
 
@@ -130,15 +118,15 @@ export default function App() {
             onFinish={handleGameFinish}
             onCancel={() => {
               setActiveProgramId(null);
-              setView('settings');
+              setView('dashboard');
             }}
           />
         )}
 
         {view === 'tutorial' && (
           <TutorialScreen
-            onComplete={() => setView('settings')}
-            onSkip={() => setView('settings')}
+            onComplete={() => setView('dashboard')}
+            onSkip={() => setView('dashboard')}
           />
         )}
 

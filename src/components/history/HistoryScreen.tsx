@@ -1,8 +1,9 @@
 import { useEffect, useState, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
-import type { SessionRecord } from '../../types';
-import { getSessions, deleteSession } from '../../lib/api';
+import type { SessionRecord, UserAchievement } from '../../types';
+import { getSessions, deleteSession, getAchievements } from '../../lib/api';
 import { STIMULUS_LABELS } from '../../lib/constants';
+import { AchievementGrid } from '../dashboard/AchievementGrid';
 
 const LEVEL_COLORS: Record<number, string> = {
   1: '#22c55e',
@@ -28,18 +29,21 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [achievements, setAchievements] = useState<UserAchievement[]>([]);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
-        const [pageData, allData] = await Promise.all([
+        const [pageData, allData, achData] = await Promise.all([
           getSessions(page),
           getSessions(1, 1000),
+          getAchievements(),
         ]);
         setSessions(pageData.sessions);
         setTotalPages(pageData.pages);
         setAllSessions(allData.sessions);
+        setAchievements(achData);
       } catch {
         // not signed in
       } finally {
@@ -94,6 +98,27 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
       });
 
     return { data, levels };
+  }, [allSessions]);
+
+  // Compute average by stimulus type from all sessions
+  const avgByStimulus = useMemo(() => {
+    const totals: Record<string, { hits: number; total: number }> = {};
+
+    for (const session of allSessions) {
+      for (const [type, result] of Object.entries(session.results)) {
+        if (!totals[type]) totals[type] = { hits: 0, total: 0 };
+        totals[type].hits += result.hits;
+        totals[type].total += result.hits + result.misses + result.falseAlarms;
+      }
+    }
+
+    const avg: Record<string, number> = {};
+    for (const [type, data] of Object.entries(totals)) {
+      if (data.total > 0) {
+        avg[type] = Math.round((data.hits / data.total) * 100);
+      }
+    }
+    return avg;
   }, [allSessions]);
 
   return (
@@ -176,6 +201,37 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
               </ResponsiveContainer>
             </div>
           )}
+
+          {/* Average by Stimulus Type */}
+          {Object.keys(avgByStimulus).length > 0 && (
+            <div className="card">
+              <h3 className="text-sm text-gray-400 font-medium uppercase tracking-wider mb-3">
+                Average by Type
+              </h3>
+              <div className="space-y-2">
+                {Object.entries(avgByStimulus).map(([type, avg]) => (
+                  <div key={type} className="flex items-center justify-between">
+                    <span className="text-sm text-gray-300 capitalize">{type}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-24 h-2 bg-gray-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${avg}%`,
+                            backgroundColor: avg >= 80 ? '#22c55e' : avg >= 60 ? '#eab308' : '#ef4444',
+                          }}
+                        />
+                      </div>
+                      <span className="text-sm font-medium text-primary-300 w-10 text-right">{avg}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Achievements */}
+          <AchievementGrid userAchievements={achievements} />
 
           {/* Session List */}
           <div className="space-y-2">

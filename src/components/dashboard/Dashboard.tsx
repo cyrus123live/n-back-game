@@ -1,42 +1,54 @@
 import { useEffect, useState } from 'react';
-import type { UserProfile, StatsData, DailyChallenge as DailyChallengeType, UserAchievement as UserAchievementType, GameSettings, TrainingProgramRecord } from '../../types';
-import { getProfile, getStats, getDailyChallenge, getAchievements, getPrograms } from '../../lib/api';
-import { StreakCard } from './StreakCard';
-import { LevelCard } from './LevelCard';
-import { ProgressChart } from './ProgressChart';
-import { AchievementGrid } from './AchievementGrid';
+import type { UserProfile, StatsData, DailyChallenge as DailyChallengeType, GameSettings, TrainingProgramRecord, StimulusType } from '../../types';
+import { getProfile, getStats, getDailyChallenge, getPrograms } from '../../lib/api';
+import { STIMULUS_LABELS, STIMULUS_COLORS } from '../../lib/constants';
+import { STIMULUS_KEY_MAP } from '../../types';
+import { CompactStatsCard } from './CompactStatsCard';
 import { DailyChallenge } from './DailyChallenge';
 import { ProgramCard } from '../programs/ProgramCard';
 
 interface DashboardProps {
-  onPlay: () => void;
+  onStart: (settings: GameSettings) => void;
   onDailyChallenge: (challenge: DailyChallengeType) => void;
   onTutorial: () => void;
   onNavigate: (view: string) => void;
   onProgramPlay: (settings: GameSettings, programId: string) => void;
 }
 
-export function Dashboard({ onPlay, onDailyChallenge, onTutorial, onNavigate, onProgramPlay }: DashboardProps) {
+const ALL_STIMULI: StimulusType[] = ['position', 'color', 'shape', 'number', 'audio'];
+const TRIAL_OPTIONS = [20, 25, 30];
+const INTERVAL_OPTIONS = [
+  { value: 2000, label: '2.0s' },
+  { value: 2500, label: '2.5s' },
+  { value: 3000, label: '3.0s' },
+];
+
+export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, onProgramPlay }: DashboardProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<StatsData | null>(null);
   const [challenge, setChallenge] = useState<DailyChallengeType | null>(null);
-  const [achievements, setAchievements] = useState<UserAchievementType[]>([]);
   const [activeProgram, setActiveProgram] = useState<TrainingProgramRecord | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Inline settings state
+  const [nLevel, setNLevel] = useState(2);
+  const [activeStimuli, setActiveStimuli] = useState<StimulusType[]>(['position', 'color']);
+  const [trialCount, setTrialCount] = useState(25);
+  const [intervalMs, setIntervalMs] = useState(2500);
+  const [adaptive, setAdaptive] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [p, s, c, a] = await Promise.all([
+        const [p, s, c] = await Promise.all([
           getProfile(),
           getStats(),
           getDailyChallenge(),
-          getAchievements(),
         ]);
         setProfile(p);
         setStats(s);
         setChallenge(c);
-        setAchievements(a);
 
         // Load active program
         try {
@@ -55,6 +67,20 @@ export function Dashboard({ onPlay, onDailyChallenge, onTutorial, onNavigate, on
     load();
   }, []);
 
+  const toggleStimulus = (type: StimulusType) => {
+    setActiveStimuli((prev) => {
+      if (prev.includes(type)) {
+        if (prev.length <= 1) return prev;
+        return prev.filter((s) => s !== type);
+      }
+      return [...prev, type];
+    });
+  };
+
+  const handleStart = () => {
+    onStart({ nLevel, activeStimuli, trialCount, intervalMs, adaptive });
+  };
+
   if (loading) {
     return (
       <div className="max-w-lg mx-auto space-y-4 py-6 px-4">
@@ -67,18 +93,19 @@ export function Dashboard({ onPlay, onDailyChallenge, onTutorial, onNavigate, on
     );
   }
 
-  // Unauthenticated / no profile: show simple play button
+  // Unauthenticated / no profile: show inline settings + play
   if (!profile) {
     return (
-      <div className="max-w-lg mx-auto py-12 px-4 text-center space-y-8">
-        <div>
+      <div className="max-w-lg mx-auto py-8 px-4 space-y-6">
+        <div className="text-center">
           <h1 className="text-4xl font-black mb-2">Unreel</h1>
           <p className="text-gray-400">Train your working memory with the N-Back task</p>
         </div>
-        <button onClick={onPlay} className="btn-primary text-xl px-12 py-5">
-          Play
-        </button>
-        <p className="text-sm text-gray-500">Sign in to track progress, earn XP, and unlock achievements</p>
+
+        {/* Inline Settings */}
+        {renderSettings()}
+
+        <p className="text-sm text-gray-500 text-center">Sign in to track progress, earn XP, and unlock achievements</p>
       </div>
     );
   }
@@ -113,20 +140,8 @@ export function Dashboard({ onPlay, onDailyChallenge, onTutorial, onNavigate, on
         <ProgramCard program={activeProgram} onContinue={onProgramPlay} />
       )}
 
-      {/* Play Button */}
-      <button
-        onClick={onPlay}
-        className="w-full btn-primary text-xl py-5 flex items-center justify-center gap-3"
-      >
-        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            fillRule="evenodd"
-            d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
-            clipRule="evenodd"
-          />
-        </svg>
-        Play
-      </button>
+      {/* Inline Settings */}
+      {renderSettings()}
 
       {/* Daily Challenge */}
       <DailyChallenge
@@ -134,57 +149,19 @@ export function Dashboard({ onPlay, onDailyChallenge, onTutorial, onNavigate, on
         onPlay={() => challenge && onDailyChallenge(challenge)}
       />
 
-      {/* Level & Streak */}
-      <div className="grid grid-cols-1 gap-4">
-        <LevelCard
+      {/* Compact Stats */}
+      {stats && profile && (
+        <CompactStatsCard
           level={profile.level}
           xp={profile.xp}
           currentLevelXp={profile.currentLevelXp}
           nextLevelXp={profile.nextLevelXp}
-        />
-        <StreakCard
           currentStreak={profile.currentStreak}
           longestStreak={profile.longestStreak}
-          streakFreezes={profile.streakFreezes}
-          heatmap={stats?.heatmap || {}}
+          totalSessions={stats.totalSessions}
+          heatmap={stats.heatmap}
         />
-      </div>
-
-      {/* Stats */}
-      {stats && (
-        <>
-          {/* Highest N-Level */}
-          <div className="card flex items-center justify-between">
-            <div>
-              <div className="text-sm text-gray-400">Highest Level Played</div>
-              <div className="text-3xl font-black text-primary-400">{stats.highestNLevel}-Back</div>
-            </div>
-            <div className="text-sm text-gray-500">{stats.totalSessions} total sessions</div>
-          </div>
-
-          <ProgressChart data={stats.scoreTrend} />
-
-          {/* Avg by stimulus type */}
-          {Object.keys(stats.avgByStimulus).length > 0 && (
-            <div className="card">
-              <h3 className="text-sm text-gray-400 font-medium uppercase tracking-wider mb-3">
-                Average by Type
-              </h3>
-              <div className="space-y-2">
-                {Object.entries(stats.avgByStimulus).map(([type, avg]) => (
-                  <div key={type} className="flex items-center justify-between">
-                    <span className="text-sm text-gray-300 capitalize">{type}</span>
-                    <span className="text-sm font-medium text-primary-300">{avg}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
       )}
-
-      {/* Achievements */}
-      <AchievementGrid userAchievements={achievements} />
 
       {/* Quick Links */}
       <div className="flex gap-3">
@@ -203,4 +180,165 @@ export function Dashboard({ onPlay, onDailyChallenge, onTutorial, onNavigate, on
       </div>
     </div>
   );
+
+  function renderSettings() {
+    return (
+      <>
+        {/* N-Level Picker */}
+        <div className="card">
+          <label className="block text-sm text-gray-400 mb-3 font-medium">
+            {adaptive ? 'Starting Level' : 'N-Back Level'}
+          </label>
+          <div className="flex gap-2 flex-wrap">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+              <button
+                key={n}
+                onClick={() => setNLevel(n)}
+                className={`
+                  w-11 h-11 rounded-xl font-bold text-lg transition-all
+                  ${n === nLevel
+                    ? 'bg-primary-600 text-white ring-2 ring-primary-400'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }
+                `}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Stimuli Toggles */}
+        <div className="card">
+          <label className="block text-sm text-gray-400 mb-3 font-medium">
+            Stimuli ({activeStimuli.length} active)
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {ALL_STIMULI.map((type) => {
+              const active = activeStimuli.includes(type);
+              return (
+                <button
+                  key={type}
+                  onClick={() => toggleStimulus(type)}
+                  className={`
+                    flex items-center gap-2 px-3 py-2 rounded-xl transition-all text-sm font-medium
+                    border-2
+                    ${active
+                      ? 'border-opacity-60 bg-opacity-10'
+                      : 'border-gray-700 bg-gray-800/50 hover:bg-gray-700/50'
+                    }
+                  `}
+                  style={
+                    active
+                      ? { borderColor: STIMULUS_COLORS[type], backgroundColor: `${STIMULUS_COLORS[type]}15` }
+                      : {}
+                  }
+                >
+                  <div
+                    className={`w-2.5 h-2.5 rounded-full transition-all ${active ? '' : 'opacity-30'}`}
+                    style={{ backgroundColor: STIMULUS_COLORS[type] }}
+                  />
+                  <span className={active ? 'text-white' : 'text-gray-400'}>
+                    {STIMULUS_LABELS[type]}
+                  </span>
+                  <span className="key-hint text-xs">{STIMULUS_KEY_MAP[type]}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Advanced Section (collapsible) */}
+        <button
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-300 transition-colors w-full"
+        >
+          <svg
+            className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-90' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+          Advanced Settings
+        </button>
+
+        {showAdvanced && (
+          <div className="card space-y-4">
+            {/* Trial Count */}
+            <div>
+              <label className="block text-sm text-gray-400 mb-2 font-medium">Trials</label>
+              <div className="flex gap-2">
+                {TRIAL_OPTIONS.map((count) => (
+                  <button
+                    key={count}
+                    onClick={() => setTrialCount(count)}
+                    className={`
+                      flex-1 py-2.5 rounded-xl font-medium transition-all text-sm
+                      ${count === trialCount
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }
+                    `}
+                  >
+                    {count}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Interval */}
+            <div>
+              <label className="block text-sm text-gray-400 mb-2 font-medium">Interval</label>
+              <div className="flex gap-2">
+                {INTERVAL_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setIntervalMs(opt.value)}
+                    className={`
+                      flex-1 py-2.5 rounded-xl font-medium transition-all text-sm
+                      ${opt.value === intervalMs
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }
+                    `}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Adaptive Toggle */}
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block text-sm text-gray-300 font-medium">Adaptive Difficulty</label>
+                <p className="text-xs text-gray-500 mt-0.5">N-level adjusts based on performance</p>
+              </div>
+              <button
+                onClick={() => setAdaptive(!adaptive)}
+                className={`
+                  relative w-12 h-7 rounded-full transition-colors duration-200
+                  ${adaptive ? 'bg-primary-600' : 'bg-gray-600'}
+                `}
+              >
+                <div
+                  className={`
+                    absolute top-0.5 w-6 h-6 rounded-full bg-white transition-transform duration-200
+                    ${adaptive ? 'translate-x-5' : 'translate-x-0.5'}
+                  `}
+                />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Start Button */}
+        <button onClick={handleStart} className="btn-primary w-full text-lg py-4">
+          Start {nLevel}-Back{adaptive ? ' (Adaptive)' : ''}
+        </button>
+      </>
+    );
+  }
 }

@@ -20,16 +20,20 @@
 ## Architecture
 
 ### Frontend (`src/`)
-- **Game engine**: `hooks/useGameLoop.ts` (timer, trial progression, combo), `hooks/useKeyboard.ts` (a/s/d/j/l key mapping), `hooks/useAudio.ts` (SpeechSynthesis + tones)
+- **Game engine**: `hooks/useGameLoop.ts` (timer, trial progression, combo, adaptive between-session evaluation), `hooks/useKeyboard.ts` (a/s/d/j/l key mapping), `hooks/useAudio.ts` (SpeechSynthesis + Web Audio tones via module-level singleton AudioContext)
 - **Sequence logic**: `lib/sequence.ts` generates stimuli with ~33% match rate, forces match/non-match per type
 - **Scoring**: `lib/scoring.ts` - per-type accuracy, XP = nLevel * 10 * accuracy * combo multiplier
+- **Programs**: `lib/programs.ts` - 3 training program templates (beginner/intermediate/advanced, 20 sessions each) with score-gated progression (70% to advance, 90% to skip ahead)
+- **Tutorial**: `lib/tutorialData.ts` - pre-scripted 8-trial 2-back walkthrough sequence and step definitions
 - **State**: No state library; `App.tsx` manages view routing via `useState`, game state lives in `useGameLoop`
-- **Components**: `components/game/` (gameplay), `components/dashboard/` (home), `components/settings/`, `components/results/`, `components/history/`, `components/layout/`
+- **Components**: `components/game/` (gameplay), `components/dashboard/` (home + inline settings), `components/results/`, `components/history/` (charts, avg-by-type, achievements, session list), `components/layout/`, `components/tutorial/`, `components/programs/`
 
 ### Backend (`server/`)
 - `index.ts` - Express entry, serves Vite build from `dist/client/` + API routes
-- `routes/sessions.ts` - POST (save session + XP + streaks + achievements), GET (paginated history)
+- `routes/sessions.ts` - POST (save session + XP + streaks + achievements), GET (paginated history), DELETE (remove session)
+- `routes/programs.ts` - GET (list programs), POST `/enroll`, POST `/:id/complete-session` (score-gated), DELETE `/:id` (abandon)
 - `routes/stats.ts` - GET `/api/profile`, `/api/stats`, `/api/achievements`, `/api/daily-challenge`
+- `lib/programs.ts` - Template validation, phase boundaries for skip target computation
 - `db.ts` - Prisma client singleton
 
 ### Key Mappings
@@ -52,7 +56,9 @@ The Dockerfile uses `ARG VITE_CLERK_PUBLISHABLE_KEY` to pass it into the Docker 
 
 ## Database
 
-Schema in `prisma/schema.prisma`: `UserProfile`, `Session`, `UserAchievement`. Migrations live in `prisma/migrations/`. The Docker CMD runs `prisma migrate deploy` before starting the server.
+Schema in `prisma/schema.prisma`: `UserProfile`, `Session`, `UserAchievement`, `TrainingProgram`. Migrations live in `prisma/migrations/`. The Docker CMD runs `prisma migrate deploy` before starting the server.
+
+Session has optional adaptive fields: `adaptive`, `startingLevel`, `endingLevel`, `levelChanges`. TrainingProgram tracks enrollment, `currentDay`, `status` (active/completed/abandoned), and `completedSessions` (JSON array of session IDs).
 
 ## Gotchas
 
@@ -60,6 +66,11 @@ Schema in `prisma/schema.prisma`: `UserProfile`, `Session`, `UserAchievement`. M
 - `VITE_` env vars are baked in at build time, not runtime - changes require a rebuild
 - Audio letters are stored uppercase in `lib/constants.ts` but lowercased before passing to SpeechSynthesis to avoid "Capital B" speech
 - The daily challenge is seeded deterministically from the date string
+- AudioContext requires user interaction to unlock (autoplay policy) - `useAudio.ts` uses a module-level singleton with global unlock on first click/touch/keydown
+- Match buttons are toggleable - pressing again before trial ends un-selects the response (`respondMatch` returns `boolean` indicating toggle state)
+- Adaptive difficulty is between-session only (evaluates at end, recommends next level: >=85% up, <=50% down)
+- Training program progression is score-gated (70% to advance, 90%+ to skip to next phase). Phase boundaries defined in `server/lib/programs.ts` as `TEMPLATE_PHASES`
+- Express `req.params.id` can be `string | string[]` - cast with `as string` in route handlers
 
 ## Git
 

@@ -19,11 +19,6 @@ export function Navbar({ currentStreak, onNavigate, currentView }: NavbarProps) 
           </button>
           <div className="hidden sm:flex items-center gap-1">
             <NavLink
-              label="Play"
-              active={currentView === 'settings'}
-              onClick={() => onNavigate('settings')}
-            />
-            <NavLink
               label="History"
               active={currentView === 'history'}
               onClick={() => onNavigate('history')}
