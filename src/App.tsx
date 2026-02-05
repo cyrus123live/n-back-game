@@ -108,6 +108,7 @@ export default function App() {
             onTutorial={handleTutorial}
             onNavigate={handleNavigate}
             onProgramPlay={handleProgramPlay}
+            currentStreak={currentStreak}
           />
         )}
 

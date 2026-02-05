@@ -18,8 +18,9 @@ const USER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 async function fetchJSON<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...options,
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    cache: 'no-store',
   });
   if (!res.ok) {
     throw new Error(`API error: ${res.status}`);

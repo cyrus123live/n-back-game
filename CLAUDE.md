@@ -74,7 +74,8 @@ Session has optional adaptive fields: `adaptive`, `startingLevel`, `endingLevel`
 - Dashboard has inline settings (no separate settings screen) — N-level picker, stimuli toggles, collapsible Advanced section (trials, interval, adaptive)
 - Default stimuli are `['position', 'color']`
 - GameGrid renders a single centered square when `position` is not in `activeStimuli`
-- ResultsScreen propagates `newStreak` back to App.tsx via `onStreakUpdate` callback so the Navbar streak counter updates immediately after session save
+- ResultsScreen propagates `newStreak` back to App.tsx via `onStreakUpdate` callback so the Navbar streak counter updates immediately after session save. App.tsx also passes `currentStreak` down to Dashboard so the CompactStatsCard always reflects the latest value (handles race condition where user navigates back before save completes)
+- All API calls use `cache: 'no-store'` to prevent browser caching of stale profile/stats data
 - CompactStatsCard combines level/rank, streak, total sessions, XP bar, and 12-week activity heatmap into one card
 - History screen shows chart, avg-by-type, achievements, and session list
 

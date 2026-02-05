@@ -13,6 +13,7 @@ interface DashboardProps {
   onTutorial: () => void;
   onNavigate: (view: string) => void;
   onProgramPlay: (settings: GameSettings, programId: string) => void;
+  currentStreak?: number;
 }
 
 const ALL_STIMULI: StimulusType[] = ['position', 'color', 'shape', 'number', 'audio'];
@@ -23,7 +24,7 @@ const INTERVAL_OPTIONS = [
   { value: 3000, label: '3.0s' },
 ];
 
-export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, onProgramPlay }: DashboardProps) {
+export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, onProgramPlay, currentStreak: streakFromApp }: DashboardProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<StatsData | null>(null);
   const [challenge, setChallenge] = useState<DailyChallengeType | null>(null);
@@ -156,8 +157,8 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
           xp={profile.xp}
           currentLevelXp={profile.currentLevelXp}
           nextLevelXp={profile.nextLevelXp}
-          currentStreak={profile.currentStreak}
-          longestStreak={profile.longestStreak}
+          currentStreak={streakFromApp ?? profile.currentStreak}
+          longestStreak={Math.max(profile.longestStreak, streakFromApp ?? 0)}
           totalSessions={stats.totalSessions}
           heatmap={stats.heatmap}
         />
