@@ -4,7 +4,7 @@ import { ClerkProvider } from '@clerk/clerk-react';
 import App from './App';
 import './index.css';
 
-const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
 
 console.log('[Unreel] VITE_CLERK_PUBLISHABLE_KEY present:', !!clerkPubKey);
 console.log('[Unreel] VITE_CLERK_PUBLISHABLE_KEY value:', clerkPubKey ? `${clerkPubKey.slice(0, 10)}...` : 'undefined');
@@ -14,9 +14,11 @@ if (!clerkPubKey) {
   throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY environment variable');
 }
 
+const publishableKey: string = clerkPubKey;
+
 function Root() {
   return (
-    <ClerkProvider publishableKey={clerkPubKey}>
+    <ClerkProvider publishableKey={publishableKey}>
       <App />
     </ClerkProvider>
   );
