@@ -40,6 +40,22 @@ router.post('/', async (req: Request, res: Response) => {
       ?? (profile.lastPlayedAt ? formatDateInTz(profile.lastPlayedAt, userTz) : null);
     const isFirstPlayToday = lastPlayedStr !== todayStr;
 
+    // DEBUG: Log all streak-related values
+    console.log('[STREAK DEBUG] Session save:', JSON.stringify({
+      clientLocalDate: localDate,
+      clientTz: tz,
+      todayStr,
+      yesterdayStr,
+      lastPlayedStr,
+      lastPlayedDate_db: profile.lastPlayedDate,
+      lastPlayedAt_db: profile.lastPlayedAt?.toISOString() ?? null,
+      lastPlayedAt_type: profile.lastPlayedAt === null ? 'null' : typeof profile.lastPlayedAt,
+      lastPlayedAt_isDate: profile.lastPlayedAt instanceof Date,
+      currentStreak_db: profile.currentStreak,
+      isFirstPlayToday,
+      streakFreezes: profile.streakFreezes,
+    }));
+
     // Apply daily first-play bonus
     const finalXp = isFirstPlayToday ? Math.round(xpEarned * 1.5) : xpEarned;
 
@@ -49,18 +65,24 @@ router.post('/', async (req: Request, res: Response) => {
     if (isFirstPlayToday) {
       if (lastPlayedStr === yesterdayStr) {
         newStreak += 1;
+        console.log(`[STREAK DEBUG] Incrementing streak: ${profile.currentStreak} -> ${newStreak}`);
       } else {
+        console.log(`[STREAK DEBUG] Dates don't match! lastPlayedStr="${lastPlayedStr}" !== yesterdayStr="${yesterdayStr}"`);
         // Streak broken - check for freeze
         if (profile.streakFreezes > 0 && profile.lastPlayedAt) {
           // Use a streak freeze
+          console.log(`[STREAK DEBUG] Using freeze (${profile.streakFreezes} remaining). Streak stays at ${newStreak}`);
           await prisma.userProfile.update({
             where: { id: profile.id },
             data: { streakFreezes: { decrement: 1 } },
           });
         } else {
+          console.log(`[STREAK DEBUG] No freeze available or no lastPlayedAt. Resetting to 1`);
           newStreak = 1;
         }
       }
+    } else {
+      console.log(`[STREAK DEBUG] Not first play today, streak unchanged at ${newStreak}`);
     }
 
     const longestStreak = Math.max(profile.longestStreak, newStreak);

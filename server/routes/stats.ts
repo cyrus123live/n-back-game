@@ -38,8 +38,20 @@ router.get('/profile', async (req: Request, res: Response) => {
     const lastPlayedStr = profile.lastPlayedDate
       ?? (profile.lastPlayedAt ? formatDateInTz(profile.lastPlayedAt, userTz) : null);
 
+    // DEBUG: Log profile streak check
+    console.log('[STREAK DEBUG] Profile check:', JSON.stringify({
+      clientLocalDate: localDate,
+      todayStr,
+      yesterdayStr,
+      lastPlayedStr,
+      lastPlayedDate_db: profile.lastPlayedDate,
+      lastPlayedAt_db: profile.lastPlayedAt?.toISOString() ?? null,
+      currentStreak_db: profile.currentStreak,
+    }));
+
     let streakBroken = false;
     if (lastPlayedStr && lastPlayedStr < yesterdayStr && profile.currentStreak > 0) {
+      console.log(`[STREAK DEBUG] Profile: BREAKING streak! "${lastPlayedStr}" < "${yesterdayStr}"`);
       streakBroken = true;
       await prisma.userProfile.update({
         where: { id: profile.id },
@@ -210,6 +222,47 @@ router.get('/daily-challenge', async (req: Request, res: Response) => {
     timeUntilNext,
     dateKey: dateStr,
   });
+});
+
+// TEMPORARY DEBUG ENDPOINT - remove after fixing streak bug
+router.get('/debug/streak', async (_req: Request, res: Response) => {
+  try {
+    const profiles = await prisma.userProfile.findMany({
+      orderBy: { lastPlayedAt: 'desc' },
+      take: 3,
+      select: {
+        id: true,
+        currentStreak: true,
+        longestStreak: true,
+        lastPlayedAt: true,
+        lastPlayedDate: true,
+        streakFreezes: true,
+      },
+    });
+
+    const now = new Date();
+    const tzTest = {
+      utcNow: now.toISOString(),
+      formatUTC: formatDateInTz(now, 'UTC'),
+      formatToronto: (() => { try { return formatDateInTz(now, 'America/Toronto'); } catch (e) { return `ERROR: ${e}`; } })(),
+      formatNewYork: (() => { try { return formatDateInTz(now, 'America/New_York'); } catch (e) { return `ERROR: ${e}`; } })(),
+    };
+
+    // Test if Intl timezone actually works or silently falls back
+    const tzActuallyWorks = (() => {
+      try {
+        const utcParts = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', hour: 'numeric', hour12: false }).format(now);
+        const estParts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Toronto', hour: 'numeric', hour12: false }).format(now);
+        return { utcHour: utcParts, torontoHour: estParts, same: utcParts === estParts };
+      } catch (e) {
+        return { error: String(e) };
+      }
+    })();
+
+    res.json({ profiles, tzTest, tzActuallyWorks });
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
 });
 
 export default router;
