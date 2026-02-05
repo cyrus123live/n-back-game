@@ -17,7 +17,7 @@ export function Navbar({ currentStreak, onNavigate, currentView }: NavbarProps) 
           >
             Unreel
           </button>
-          <div className="hidden sm:flex items-center gap-1">
+          <div className="flex items-center gap-1">
             <SignedIn>
               <NavLink
                 label="History"
