@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../db.js';
 import { getAuth } from '@clerk/express';
 import { formatDateInTz, getYesterdayStr } from '../lib/dates.js';
+import { streakDebugLogs } from './sessions.js';
 
 const router = Router();
 
@@ -39,19 +40,21 @@ router.get('/profile', async (req: Request, res: Response) => {
       ?? (profile.lastPlayedAt ? formatDateInTz(profile.lastPlayedAt, userTz) : null);
 
     // DEBUG: Log profile streak check
-    console.log('[STREAK DEBUG] Profile check:', JSON.stringify({
+    streakDebugLogs.push(`[${new Date().toISOString()}] PROFILE CHECK: ${JSON.stringify({
       clientLocalDate: localDate,
+      clientTz: userTz,
       todayStr,
       yesterdayStr,
       lastPlayedStr,
       lastPlayedDate_db: profile.lastPlayedDate,
       lastPlayedAt_db: profile.lastPlayedAt?.toISOString() ?? null,
       currentStreak_db: profile.currentStreak,
-    }));
+    })}`);
+    if (streakDebugLogs.length > 50) streakDebugLogs.shift();
 
     let streakBroken = false;
     if (lastPlayedStr && lastPlayedStr < yesterdayStr && profile.currentStreak > 0) {
-      console.log(`[STREAK DEBUG] Profile: BREAKING streak! "${lastPlayedStr}" < "${yesterdayStr}"`);
+      streakDebugLogs.push(`[${new Date().toISOString()}] PROFILE BREAKING STREAK! "${lastPlayedStr}" < "${yesterdayStr}"`);
       streakBroken = true;
       await prisma.userProfile.update({
         where: { id: profile.id },
@@ -283,7 +286,7 @@ router.get('/debug/streak', async (_req: Request, res: Response) => {
       }
     })();
 
-    res.json({ profiles: profilesWithSessions, tzTest, tzActuallyWorks });
+    res.json({ profiles: profilesWithSessions, tzTest, tzActuallyWorks, recentLogs: streakDebugLogs.slice(-20) });
   } catch (err) {
     res.status(500).json({ error: String(err) });
   }

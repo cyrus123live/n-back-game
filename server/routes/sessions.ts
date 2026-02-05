@@ -5,6 +5,15 @@ import { formatDateInTz, getYesterdayStr } from '../lib/dates.js';
 
 const router = Router();
 
+// TEMPORARY: In-memory debug log buffer for streak debugging
+export const streakDebugLogs: string[] = [];
+function streakLog(msg: string) {
+  const entry = `[${new Date().toISOString()}] ${msg}`;
+  console.log(entry);
+  streakDebugLogs.push(entry);
+  if (streakDebugLogs.length > 50) streakDebugLogs.shift();
+}
+
 function getClerkUserId(req: Request): string | null {
   const auth = getAuth(req);
   return auth?.userId ?? null;
@@ -41,7 +50,7 @@ router.post('/', async (req: Request, res: Response) => {
     const isFirstPlayToday = lastPlayedStr !== todayStr;
 
     // DEBUG: Log all streak-related values
-    console.log('[STREAK DEBUG] Session save:', JSON.stringify({
+    streakLog(`SESSION SAVE: ${JSON.stringify({
       clientLocalDate: localDate,
       clientTz: tz,
       todayStr,
@@ -54,7 +63,7 @@ router.post('/', async (req: Request, res: Response) => {
       currentStreak_db: profile.currentStreak,
       isFirstPlayToday,
       streakFreezes: profile.streakFreezes,
-    }));
+    })}`);
 
     // Apply daily first-play bonus
     const finalXp = isFirstPlayToday ? Math.round(xpEarned * 1.5) : xpEarned;
@@ -65,24 +74,24 @@ router.post('/', async (req: Request, res: Response) => {
     if (isFirstPlayToday) {
       if (lastPlayedStr === yesterdayStr) {
         newStreak += 1;
-        console.log(`[STREAK DEBUG] Incrementing streak: ${profile.currentStreak} -> ${newStreak}`);
+        streakLog(`INCREMENTING streak: ${profile.currentStreak} -> ${newStreak}`);
       } else {
-        console.log(`[STREAK DEBUG] Dates don't match! lastPlayedStr="${lastPlayedStr}" !== yesterdayStr="${yesterdayStr}"`);
+        streakLog(`DATES DONT MATCH! lastPlayedStr="${lastPlayedStr}" !== yesterdayStr="${yesterdayStr}"`);
         // Streak broken - check for freeze
         if (profile.streakFreezes > 0 && profile.lastPlayedAt) {
           // Use a streak freeze
-          console.log(`[STREAK DEBUG] Using freeze (${profile.streakFreezes} remaining). Streak stays at ${newStreak}`);
+          streakLog(`USING FREEZE (${profile.streakFreezes} remaining). Streak stays at ${newStreak}`);
           await prisma.userProfile.update({
             where: { id: profile.id },
             data: { streakFreezes: { decrement: 1 } },
           });
         } else {
-          console.log(`[STREAK DEBUG] No freeze available or no lastPlayedAt. Resetting to 1`);
+          streakLog(`NO FREEZE or no lastPlayedAt. Resetting to 1`);
           newStreak = 1;
         }
       }
     } else {
-      console.log(`[STREAK DEBUG] Not first play today, streak unchanged at ${newStreak}`);
+      streakLog(`NOT first play today, streak unchanged at ${newStreak}`);
     }
 
     const longestStreak = Math.max(profile.longestStreak, newStreak);
@@ -114,6 +123,7 @@ router.post('/', async (req: Request, res: Response) => {
     });
 
     // Update profile
+    streakLog(`WRITING to DB: currentStreak=${newStreak}, lastPlayedDate=${todayStr}, longestStreak=${longestStreak}`);
     await prisma.userProfile.update({
       where: { id: profile.id },
       data: {
@@ -126,6 +136,7 @@ router.post('/', async (req: Request, res: Response) => {
         ...(earnedFreeze ? { streakFreezes: { increment: 1 } } : {}),
       },
     });
+    streakLog(`DB WRITE COMPLETE. Responding with newStreak=${newStreak}`);
 
     // Check achievements (use endingLevel for adaptive sessions)
     const effectiveNLevel = adaptive && endingLevel ? endingLevel : nLevel;
