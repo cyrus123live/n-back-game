@@ -1,5 +1,9 @@
 # Unreel - N-Back Cognitive Training App
 
+## Mission
+
+Strengthen working memory for as many people as possible. Every design and engineering decision should serve that goal — make the training effective, accessible, and engaging enough that people actually stick with it.
+
 ## Quick Reference
 
 - **Stack**: React 18 + TypeScript + Vite (frontend), Express + Prisma (backend), Tailwind CSS, Recharts
