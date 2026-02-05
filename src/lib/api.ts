@@ -16,7 +16,7 @@ import type {
 const BASE = '/api';
 const USER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-function getLocalDate(): string {
+export function getLocalDate(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }

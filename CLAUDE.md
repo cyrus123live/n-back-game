@@ -34,7 +34,7 @@ Strengthen working memory for as many people as possible. Every design and engin
 
 ### Backend (`server/`)
 - `index.ts` - Express entry, serves Vite build from `dist/client/` + API routes
-- `routes/sessions.ts` - POST (save session + XP + streaks + achievements), GET (paginated history), DELETE (remove session)
+- `routes/sessions.ts` - POST (save session + XP + streaks + achievements + personal best check), GET (paginated history), DELETE (remove session)
 - `routes/programs.ts` - GET (list programs), POST `/enroll`, POST `/:id/complete-session` (score-gated), DELETE `/:id` (abandon)
 - `routes/stats.ts` - GET `/api/profile`, `/api/stats`, `/api/achievements`, `/api/daily-challenge`
 - `lib/programs.ts` - Template validation, phase boundaries for skip target computation
@@ -82,8 +82,10 @@ Session has optional adaptive fields: `adaptive`, `startingLevel`, `endingLevel`
 - GameGrid renders a single centered square when `position` is not in `activeStimuli`
 - ResultsScreen propagates `newStreak` back to App.tsx via `onStreakUpdate` callback so the Navbar streak counter updates immediately after session save. App.tsx also passes `currentStreak` down to Dashboard so the CompactStatsCard always reflects the latest value (handles race condition where user navigates back before save completes)
 - ResultsScreen shows animated XP level bar for signed-in users: bar fills from old progress to new progress with 1-second animation. Server returns `totalXp` in session save response to enable client-side threshold calculation
+- ResultsScreen shows personal best celebration card (yellow border, `animate-bounce-in`) when `isPersonalBest` is true. Server checks via `Session.findFirst` at the effective N-level excluding current session. First session at any N-level is always a personal best. Confetti fires for personal best (150 particles) in addition to level-up (200) and high score (100)
+- ResultsScreen shows a "tomorrow hook" message after save — priority chain: program continuation > streak >=7 > streak 2-6 > streak 1 > achievement proximity (within 3 days of milestone) > personal best callback > generic fallback. `getLocalDate()` is exported from `lib/api.ts` for streak danger comparisons
 - All API calls use `cache: 'no-store'` to prevent browser caching of stale profile/stats data
-- CompactStatsCard combines level/rank, streak, total sessions, XP bar, and 12-week activity heatmap into one card
+- CompactStatsCard combines level/rank, streak, total sessions, XP bar, 12-week activity heatmap, and streak danger indicator into one card. Streak danger shows a countdown banner (green >=8h, yellow 4-8h, red <4h) when `currentStreak > 0` and the user hasn't played today (compares `lastPlayedDate` vs `getLocalDate()`)
 - History screen shows chart, avg-by-type, achievements, and session list
 - `server/lib/dates.ts` uses `formatToParts()` with `en-US` locale (not `en-CA`) because `node:20-alpine` ships with `small-icu` which only includes `en-US` — other locales silently fall back to wrong date formats
 - Streak dates use client-provided `localDate` (YYYY-MM-DD) instead of server-side timezone conversion. The client sends `getLocalDate()` in both `saveSession` POST body and `getProfile` query params. Server stores `lastPlayedDate` (String) alongside `lastPlayedAt` (DateTime) for reliable date comparison — avoids Alpine small-icu timezone fallback causing UTC day boundary mismatches

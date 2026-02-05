@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { getRank } from '../../lib/constants';
+import { getLocalDate } from '../../lib/api';
 import type { StatsData } from '../../types';
 
 interface CompactStatsCardProps {
@@ -10,6 +12,7 @@ interface CompactStatsCardProps {
   longestStreak: number;
   totalSessions: number;
   heatmap: StatsData['heatmap'];
+  lastPlayedDate: string | null;
 }
 
 export function CompactStatsCard({
@@ -21,6 +24,7 @@ export function CompactStatsCard({
   longestStreak,
   totalSessions,
   heatmap,
+  lastPlayedDate,
 }: CompactStatsCardProps) {
   const rank = getRank(level);
   const progress = nextLevelXp > 0 ? (currentLevelXp / nextLevelXp) * 100 : 100;
@@ -47,6 +51,44 @@ export function CompactStatsCard({
     weeks.push(week);
   }
 
+  // Streak danger countdown
+  const [streakCountdown, setStreakCountdown] = useState('');
+  const showStreakDanger = currentStreak > 0 && lastPlayedDate != null && lastPlayedDate !== getLocalDate();
+
+  useEffect(() => {
+    if (!showStreakDanger) return;
+
+    const update = () => {
+      const now = Date.now();
+      const tomorrow = new Date();
+      tomorrow.setHours(24, 0, 0, 0);
+      const diff = tomorrow.getTime() - now;
+
+      if (diff <= 0) {
+        setStreakCountdown('now!');
+        return;
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      setStreakCountdown(`${hours}h ${minutes}m`);
+    };
+
+    update();
+    const interval = setInterval(update, 60000);
+    return () => clearInterval(interval);
+  }, [showStreakDanger]);
+
+  const getStreakDangerColor = () => {
+    const now = Date.now();
+    const tomorrow = new Date();
+    tomorrow.setHours(24, 0, 0, 0);
+    const hoursLeft = (tomorrow.getTime() - now) / (1000 * 60 * 60);
+    if (hoursLeft >= 8) return { text: 'text-green-400', bg: 'bg-green-950/30', border: 'border-green-500/40' };
+    if (hoursLeft >= 4) return { text: 'text-yellow-400', bg: 'bg-yellow-950/30', border: 'border-yellow-500/40' };
+    return { text: 'text-red-400', bg: 'bg-red-950/30', border: 'border-red-500/40' };
+  };
+
   return (
     <div className="card">
       {/* Top row: level/rank, streak, sessions */}
@@ -70,6 +112,19 @@ export function CompactStatsCard({
           </span>
         </div>
       </div>
+
+      {/* Streak Danger Banner */}
+      {showStreakDanger && (() => {
+        const colors = getStreakDangerColor();
+        return (
+          <div className={`rounded-lg px-3 py-2 mb-2 border ${colors.bg} ${colors.border} flex items-center justify-between`}>
+            <span className={`text-sm font-medium ${colors.text}`}>
+              Streak expires in {streakCountdown}
+            </span>
+            <span className="text-xs text-gray-400">Play to keep your {currentStreak}-day streak!</span>
+          </div>
+        );
+      })()}
 
       {/* XP Progress Bar */}
       <div className="mb-3">

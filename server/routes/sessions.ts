@@ -103,6 +103,9 @@ router.post('/', async (req: Request, res: Response) => {
     const newTotalXp = profile.xp + finalXp;
     const newLevel = calculateLevel(newTotalXp);
 
+    // Compute effective N-level for adaptive sessions (used for personal best + achievements)
+    const effectiveNLevel = adaptive && endingLevel ? endingLevel : nLevel;
+
     // Create session
     const session = await prisma.session.create({
       data: {
@@ -122,6 +125,18 @@ router.post('/', async (req: Request, res: Response) => {
       },
     });
 
+    // Check personal best at this N-level
+    const bestAtLevel = await prisma.session.findFirst({
+      where: {
+        userId: profile.id,
+        nLevel: effectiveNLevel,
+        id: { not: session.id },
+      },
+      orderBy: { overallScore: 'desc' },
+      select: { overallScore: true },
+    });
+    const isPersonalBest = !bestAtLevel || overallScore > bestAtLevel.overallScore;
+
     // Update profile
     streakLog(`WRITING to DB: currentStreak=${newStreak}, lastPlayedDate=${todayStr}, longestStreak=${longestStreak}`);
     await prisma.userProfile.update({
@@ -138,8 +153,7 @@ router.post('/', async (req: Request, res: Response) => {
     });
     streakLog(`DB WRITE COMPLETE. Responding with newStreak=${newStreak}`);
 
-    // Check achievements (use endingLevel for adaptive sessions)
-    const effectiveNLevel = adaptive && endingLevel ? endingLevel : nLevel;
+    // Check achievements
     const newAchievements = await checkAchievements(profile.id, {
       sessionCount: await prisma.session.count({ where: { userId: profile.id } }),
       currentStreak: newStreak,
@@ -163,6 +177,7 @@ router.post('/', async (req: Request, res: Response) => {
       newStreak,
       newAchievements,
       earnedFreeze,
+      isPersonalBest,
     });
   } catch (err) {
     console.error('Error saving session:', err);

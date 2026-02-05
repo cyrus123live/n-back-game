@@ -43,6 +43,8 @@ export function ResultsScreen({
   const [isFirstPlay, setIsFirstPlay] = useState(false);
   const [leveledUp, setLeveledUp] = useState(false);
   const [newAchievements, setNewAchievements] = useState<AchievementDef[]>([]);
+  const [isPersonalBest, setIsPersonalBest] = useState(false);
+  const [newStreak, setNewStreak] = useState(0);
   const [programResult, setProgramResult] = useState<ProgramSessionResult | null>(null);
   const [xpBarData, setXpBarData] = useState<{
     oldProgress: number;
@@ -64,6 +66,8 @@ export function ResultsScreen({
         setServerXP(response.xpEarned);
         setIsFirstPlay(response.isFirstPlayToday);
         setLeveledUp(response.leveledUp);
+        setIsPersonalBest(response.isPersonalBest);
+        setNewStreak(response.newStreak);
         onStreakUpdate?.(response.newStreak);
 
         // Compute XP bar animation data
@@ -117,11 +121,12 @@ export function ResultsScreen({
           }
         }
 
-        // Fire confetti for level up or high score
-        if ((response.leveledUp || overallScore >= 0.9) && !confettiFired.current) {
+        // Fire confetti for level up, personal best, or high score
+        if ((response.leveledUp || response.isPersonalBest || overallScore >= 0.9) && !confettiFired.current) {
           confettiFired.current = true;
+          const particleCount = response.leveledUp ? 200 : response.isPersonalBest ? 150 : 100;
           confetti({
-            particleCount: response.leveledUp ? 200 : 100,
+            particleCount,
             spread: 70,
             origin: { y: 0.6 },
           });
@@ -151,6 +156,47 @@ export function ResultsScreen({
       activeProgramId
     );
   }, [programResult, activeProgramId, onNextProgramSession]);
+
+  const getTomorrowHook = (): string | null => {
+    if (saveState !== 'saved') return null;
+
+    // 1. Program continuation
+    if (activeProgramId && programResult && programResult.passed && !programResult.completed) {
+      return `Your program continues with Day ${programResult.program.currentDay} tomorrow`;
+    }
+
+    // 2. Streak protection (>=7)
+    if (newStreak >= 7) {
+      return `Come back tomorrow to keep your ${newStreak}-day streak alive`;
+    }
+
+    // 3. Streak building (2-6)
+    if (newStreak >= 2) {
+      return `${newStreak} days and counting — come back tomorrow to keep it going`;
+    }
+
+    // 4. Streak starting (1)
+    if (newStreak === 1) {
+      return 'Play again tomorrow to start building a streak';
+    }
+
+    // 5. Achievement proximity — streak milestones
+    const milestones = [7, 14, 30, 60, 100];
+    for (const milestone of milestones) {
+      const daysAway = milestone - newStreak;
+      if (daysAway > 0 && daysAway <= 3) {
+        return `${daysAway} more day${daysAway === 1 ? '' : 's'} until your ${milestone}-day streak achievement`;
+      }
+    }
+
+    // 6. Personal best callback
+    if (isPersonalBest) {
+      return 'You set a new personal best — can you beat it tomorrow?';
+    }
+
+    // 7. Generic fallback
+    return 'Every session strengthens your working memory — see you tomorrow';
+  };
 
   const scorePercent = Math.round(overallScore * 100);
 
@@ -187,6 +233,16 @@ export function ResultsScreen({
       {leveledUp && (
         <div className="card border-yellow-500/50 bg-yellow-950/20 text-center animate-bounce-in">
           <div className="text-2xl font-bold text-yellow-400">Level Up!</div>
+        </div>
+      )}
+
+      {/* Personal Best */}
+      {isPersonalBest && saveState === 'saved' && (
+        <div className="card border-yellow-500/50 bg-yellow-950/20 text-center animate-bounce-in">
+          <div className="text-2xl font-bold text-yellow-400">New Personal Best!</div>
+          <div className="text-sm text-gray-300 mt-1">
+            {scorePercent}% at {adaptive ? `${endingLevel}` : `${settings.nLevel}`}-Back
+          </div>
         </div>
       )}
 
@@ -342,6 +398,17 @@ export function ResultsScreen({
         {saveState === 'saved' && 'Session saved'}
         {saveState === 'error' && 'Could not save session (sign in to save progress)'}
       </div>
+
+      {/* Tomorrow Hook */}
+      {(() => {
+        const hook = getTomorrowHook();
+        if (!hook) return null;
+        return (
+          <div className="text-center text-sm text-gray-400 animate-slide-up">
+            <span className="text-gray-500">→</span> {hook}
+          </div>
+        );
+      })()}
 
       {/* Actions */}
       {activeProgramId && programResult ? (

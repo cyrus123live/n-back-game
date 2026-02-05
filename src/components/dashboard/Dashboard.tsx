@@ -165,6 +165,7 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
           longestStreak={Math.max(profile.longestStreak, streakFromApp ?? 0)}
           totalSessions={stats.totalSessions}
           heatmap={stats.heatmap}
+          lastPlayedDate={profile.lastPlayedDate}
         />
       )}
 

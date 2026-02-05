@@ -51,6 +51,7 @@ export interface UserProfile {
   currentStreak: number;
   longestStreak: number;
   lastPlayedAt: string | null;
+  lastPlayedDate: string | null;
   streakFreezes: number;
   currentLevelXp: number;
   nextLevelXp: number;
@@ -84,6 +85,7 @@ export interface SessionSaveResponse {
   newStreak: number;
   newAchievements: string[];
   earnedFreeze: boolean;
+  isPersonalBest: boolean;
 }
 
 export interface StatsData {
