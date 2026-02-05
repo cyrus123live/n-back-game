@@ -28,7 +28,7 @@ Strengthen working memory for as many people as possible. Every design and engin
 - **Sequence logic**: `lib/sequence.ts` generates stimuli with ~33% match rate, forces match/non-match per type
 - **Scoring**: `lib/scoring.ts` - per-type accuracy, XP = nLevel * 10 * accuracy * combo multiplier
 - **Programs**: `lib/programs.ts` - 3 training program templates (beginner/intermediate/advanced, 20 sessions each) with score-gated progression (70% to advance, 90% to skip ahead)
-- **Tutorial**: `lib/tutorialData.ts` - pre-scripted 8-trial 2-back walkthrough sequence and step definitions. Auto-shows on first visit (checks `localStorage['unreel-tutorial-seen']`)
+- **Tutorial**: `lib/tutorialData.ts` - pre-scripted 8-trial 2-back walkthrough with position + color stimuli. Auto-shows on first visit (checks `localStorage['unreel-tutorial-seen']`)
 - **State**: No state library; `App.tsx` manages view routing via `useState`, game state lives in `useGameLoop`
 - **Components**: `components/game/` (gameplay), `components/dashboard/` (home + inline settings), `components/results/`, `components/history/` (charts, avg-by-type, achievements, session list), `components/layout/`, `components/tutorial/`, `components/programs/`
 
@@ -76,6 +76,8 @@ Session has optional adaptive fields: `adaptive`, `startingLevel`, `endingLevel`
 - Training program progression is score-gated (70% to advance, 90%+ to skip to next phase). Phase boundaries defined in `server/lib/programs.ts` as `TEMPLATE_PHASES`
 - Express `req.params.id` can be `string | string[]` - cast with `as string` in route handlers
 - Dashboard has inline settings (no separate settings screen) — N-level picker, stimuli toggles, collapsible Advanced section (trials, interval, adaptive)
+- History tab only visible to signed-in users (wrapped in `<SignedIn>` in Navbar)
+- Programs screen shows sign-up prompt for unauthenticated users, with greyed-out preview of available programs
 - Default stimuli are `['position', 'color']`
 - GameGrid renders a single centered square when `position` is not in `activeStimuli`
 - ResultsScreen propagates `newStreak` back to App.tsx via `onStreakUpdate` callback so the Navbar streak counter updates immediately after session save. App.tsx also passes `currentStreak` down to Dashboard so the CompactStatsCard always reflects the latest value (handles race condition where user navigates back before save completes)

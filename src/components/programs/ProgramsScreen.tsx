@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuth, SignInButton } from '@clerk/clerk-react';
 import type { GameSettings, TrainingProgramRecord } from '../../types';
 import { getPrograms, enrollInProgram, abandonProgram } from '../../lib/api';
 import { PROGRAM_TEMPLATES, getTemplate, getRequiredScore } from '../../lib/programs';
@@ -11,6 +12,7 @@ interface ProgramsScreenProps {
 }
 
 export function ProgramsScreen({ onBack, onStartSession }: ProgramsScreenProps) {
+  const { isSignedIn, isLoaded } = useAuth();
   const [programs, setPrograms] = useState<TrainingProgramRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedTemplate, setExpandedTemplate] = useState<string | null>(null);
@@ -18,8 +20,12 @@ export function ProgramsScreen({ onBack, onStartSession }: ProgramsScreenProps) 
   const [abandonTarget, setAbandonTarget] = useState<string | null>(null);
 
   useEffect(() => {
-    loadPrograms();
-  }, []);
+    if (isLoaded && isSignedIn) {
+      loadPrograms();
+    } else if (isLoaded) {
+      setLoading(false);
+    }
+  }, [isLoaded, isSignedIn]);
 
   const loadPrograms = async () => {
     try {
@@ -86,6 +92,41 @@ export function ProgramsScreen({ onBack, onStartSession }: ProgramsScreenProps) 
               <div className="h-24 bg-gray-700 rounded" />
             </div>
           ))}
+        </div>
+      ) : !isSignedIn ? (
+        <div className="space-y-6">
+          <div className="card border-primary-500/30 bg-primary-950/20 text-center space-y-4">
+            <div className="text-4xl">🎯</div>
+            <h2 className="text-xl font-bold">Structured Training Programs</h2>
+            <p className="text-gray-400">
+              Follow a guided 20-day program designed to progressively challenge your working memory.
+              Track your progress, earn achievements, and level up.
+            </p>
+            <SignInButton mode="modal">
+              <button className="btn-primary w-full">
+                Sign in to access programs
+              </button>
+            </SignInButton>
+          </div>
+
+          {/* Preview of available programs */}
+          <div className="space-y-3 opacity-60">
+            <h2 className="text-sm text-gray-400 font-medium uppercase tracking-wider">Available Programs</h2>
+            {PROGRAM_TEMPLATES.map((template) => (
+              <div key={template.id} className="card space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-lg">{template.name}</div>
+                    <div className="text-sm text-gray-400">{template.totalDays} sessions</div>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded ${getDifficultyColor(template.difficulty)}`}>
+                    {template.difficulty}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-400">{template.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <>

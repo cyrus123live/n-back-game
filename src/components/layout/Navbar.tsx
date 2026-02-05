@@ -18,11 +18,13 @@ export function Navbar({ currentStreak, onNavigate, currentView }: NavbarProps) 
             Unreel
           </button>
           <div className="hidden sm:flex items-center gap-1">
-            <NavLink
-              label="History"
-              active={currentView === 'history'}
-              onClick={() => onNavigate('history')}
-            />
+            <SignedIn>
+              <NavLink
+                label="History"
+                active={currentView === 'history'}
+                onClick={() => onNavigate('history')}
+              />
+            </SignedIn>
             <NavLink
               label="Programs"
               active={currentView === 'programs'}
