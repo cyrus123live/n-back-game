@@ -58,7 +58,7 @@ export function Dashboard({ onPlay, onDailyChallenge }: DashboardProps) {
     return (
       <div className="max-w-lg mx-auto py-12 px-4 text-center space-y-8">
         <div>
-          <h1 className="text-4xl font-black mb-2">N-Back Trainer</h1>
+          <h1 className="text-4xl font-black mb-2">Unreel</h1>
           <p className="text-gray-400">Train your working memory with the N-Back task</p>
         </div>
         <button onClick={onPlay} className="btn-primary text-xl px-12 py-5">
