@@ -8,6 +8,14 @@ export interface ProgramSession {
   intervalMs: number;
   description: string;
   adaptive?: boolean;
+  requiredScore?: number;
+}
+
+export const DEFAULT_REQUIRED_SCORE = 0.7;
+export const SKIP_THRESHOLD = 0.9;
+
+export function getRequiredScore(session: ProgramSession): number {
+  return session.requiredScore ?? DEFAULT_REQUIRED_SCORE;
 }
 
 export interface ProgramTemplate {

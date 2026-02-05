@@ -1,5 +1,5 @@
 import type { GameSettings, TrainingProgramRecord } from '../../types';
-import { getTemplate } from '../../lib/programs';
+import { getTemplate, getRequiredScore, SKIP_THRESHOLD } from '../../lib/programs';
 import { STIMULUS_LABELS } from '../../lib/constants';
 
 interface ProgramCardProps {
@@ -58,6 +58,9 @@ export function ProgramCard({ program, onContinue }: ProgramCardProps) {
           {todaySession.adaptive && <span className="text-purple-400 ml-1">(Adaptive)</span>}
         </div>
         <div className="text-xs text-gray-500">{todaySession.description}</div>
+        <div className="text-xs text-gray-500 mt-1">
+          Score {Math.round(getRequiredScore(todaySession) * 100)}% to advance · {Math.round(SKIP_THRESHOLD * 100)}% to skip ahead
+        </div>
       </div>
 
       <button onClick={handleContinue} className="btn-primary w-full">

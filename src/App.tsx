@@ -158,6 +158,7 @@ export default function App() {
               setActiveProgramId(null);
               setView('dashboard');
             }}
+            onNextProgramSession={handleProgramPlay}
           />
         )}
 

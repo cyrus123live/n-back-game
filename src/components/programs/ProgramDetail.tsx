@@ -1,5 +1,6 @@
 import type { TrainingProgramRecord } from '../../types';
 import type { ProgramTemplate } from '../../lib/programs';
+import { DEFAULT_REQUIRED_SCORE, SKIP_THRESHOLD } from '../../lib/programs';
 import { STIMULUS_LABELS } from '../../lib/constants';
 
 interface ProgramDetailProps {
@@ -12,6 +13,9 @@ export function ProgramDetail({ template, program }: ProgramDetailProps) {
 
   return (
     <div className="space-y-2">
+      <div className="text-xs text-gray-500 pb-1">
+        Score {Math.round(DEFAULT_REQUIRED_SCORE * 100)}% to advance · {Math.round(SKIP_THRESHOLD * 100)}% to skip ahead
+      </div>
       {template.sessions.map((session) => {
         const isCompleted = session.day <= completedDays;
         const isCurrent = program?.status === 'active' && session.day === program.currentDay;

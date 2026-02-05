@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { GameSettings, TrainingProgramRecord } from '../../types';
 import { getPrograms, enrollInProgram, abandonProgram } from '../../lib/api';
-import { PROGRAM_TEMPLATES, getTemplate } from '../../lib/programs';
+import { PROGRAM_TEMPLATES, getTemplate, getRequiredScore } from '../../lib/programs';
 import { ProgramDetail } from './ProgramDetail';
 import { STIMULUS_LABELS } from '../../lib/constants';
 
@@ -126,7 +126,9 @@ export function ProgramsScreen({ onBack, onStartSession }: ProgramsScreenProps) 
                         <div className="text-sm font-medium text-gray-300">
                           Today: {todaySession.nLevel}-Back • {todaySession.activeStimuli.map((s) => STIMULUS_LABELS[s]).join(' + ')}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">{todaySession.description}</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {todaySession.description} · Score {Math.round(getRequiredScore(todaySession) * 100)}% to advance
+                        </div>
                       </div>
                     )}
 

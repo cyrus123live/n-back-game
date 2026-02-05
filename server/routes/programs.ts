@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../db.js';
 import { getAuth } from '@clerk/express';
-import { isValidTemplateId, TEMPLATE_TOTAL_DAYS } from '../lib/programs.js';
+import { isValidTemplateId, TEMPLATE_TOTAL_DAYS, DEFAULT_REQUIRED_SCORE, SKIP_THRESHOLD, getSkipTarget } from '../lib/programs.js';
 
 const router = Router();
 
@@ -88,12 +88,38 @@ router.post('/:id/complete-session', async (req: Request, res: Response) => {
     if (program.userId !== profile.id) return res.status(403).json({ error: 'Forbidden' });
     if (program.status !== 'active') return res.status(400).json({ error: 'Program is not active' });
 
-    const { sessionId } = req.body;
+    const { sessionId, score } = req.body;
+    const requiredScore = DEFAULT_REQUIRED_SCORE;
+
+    // Check if score meets the requirement
+    const passed = score == null || score >= requiredScore;
+
+    if (!passed) {
+      return res.json({
+        program,
+        completed: false,
+        passed: false,
+        requiredScore,
+      });
+    }
+
+    // Score passed - compute advancement
     const completedSessions = Array.isArray(program.completedSessions)
       ? [...(program.completedSessions as string[]), sessionId]
       : [sessionId];
 
-    const nextDay = program.currentDay + 1;
+    let nextDay = program.currentDay + 1;
+    let skippedTo: number | undefined;
+
+    // Check for skip opportunity
+    if (score != null && score >= SKIP_THRESHOLD) {
+      const skipTarget = getSkipTarget(program.templateId, program.currentDay);
+      if (skipTarget > nextDay) {
+        skippedTo = skipTarget;
+        nextDay = skipTarget;
+      }
+    }
+
     const totalDays = TEMPLATE_TOTAL_DAYS[program.templateId] || 20;
     const isComplete = nextDay > totalDays;
 
@@ -106,7 +132,13 @@ router.post('/:id/complete-session', async (req: Request, res: Response) => {
       },
     });
 
-    res.json({ program: updated, completed: isComplete });
+    res.json({
+      program: updated,
+      completed: isComplete,
+      passed: true,
+      skippedTo,
+      requiredScore,
+    });
   } catch (err) {
     console.error('Error completing session:', err);
     res.status(500).json({ error: 'Failed to complete session' });

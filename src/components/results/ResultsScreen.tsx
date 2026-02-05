@@ -1,10 +1,11 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import type { SessionResults, GameSettings, AchievementDef } from '../../types';
+import type { SessionResults, GameSettings, AchievementDef, ProgramSessionResult } from '../../types';
 import { calculateAccuracy } from '../../lib/scoring';
 import { STIMULUS_LABELS, STIMULUS_COLORS, getAchievementDef } from '../../lib/constants';
 import { XPAnimation } from './XPAnimation';
 import { saveSession, completeProgramSession } from '../../lib/api';
+import { getTemplate } from '../../lib/programs';
 
 interface ResultsScreenProps {
   settings: GameSettings;
@@ -18,6 +19,7 @@ interface ResultsScreenProps {
   activeProgramId?: string | null;
   onPlayAgain: () => void;
   onBackToMenu: () => void;
+  onNextProgramSession?: (settings: GameSettings, programId: string) => void;
 }
 
 export function ResultsScreen({
@@ -32,12 +34,14 @@ export function ResultsScreen({
   activeProgramId,
   onPlayAgain,
   onBackToMenu,
+  onNextProgramSession,
 }: ResultsScreenProps) {
   const [saveState, setSaveState] = useState<'saving' | 'saved' | 'error' | 'offline'>('saving');
   const [serverXP, setServerXP] = useState(xpEarned);
   const [isFirstPlay, setIsFirstPlay] = useState(false);
   const [leveledUp, setLeveledUp] = useState(false);
   const [newAchievements, setNewAchievements] = useState<AchievementDef[]>([]);
+  const [programResult, setProgramResult] = useState<ProgramSessionResult | null>(null);
   const confettiFired = useRef(false);
 
   useEffect(() => {
@@ -61,7 +65,8 @@ export function ResultsScreen({
         // Complete program session if applicable
         if (activeProgramId && response.session?.id) {
           try {
-            await completeProgramSession(activeProgramId, response.session.id);
+            const result = await completeProgramSession(activeProgramId, response.session.id, overallScore);
+            setProgramResult(result);
           } catch {
             // ignore
           }
@@ -83,6 +88,24 @@ export function ResultsScreen({
 
     save();
   }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleNextSession = useCallback(() => {
+    if (!programResult || !activeProgramId || !onNextProgramSession) return;
+    const template = getTemplate(programResult.program.templateId);
+    if (!template) return;
+    const nextSession = template.sessions[programResult.program.currentDay - 1];
+    if (!nextSession) return;
+    onNextProgramSession(
+      {
+        nLevel: nextSession.nLevel,
+        activeStimuli: nextSession.activeStimuli,
+        trialCount: nextSession.trialCount,
+        intervalMs: nextSession.intervalMs,
+        adaptive: nextSession.adaptive,
+      },
+      activeProgramId
+    );
+  }, [programResult, activeProgramId, onNextProgramSession]);
 
   const scorePercent = Math.round(overallScore * 100);
 
@@ -207,6 +230,62 @@ export function ResultsScreen({
         )}
       </div>
 
+      {/* Program Progress */}
+      {activeProgramId && programResult && (() => {
+        const template = getTemplate(programResult.program.templateId);
+        const templateName = template?.name || 'Program';
+
+        if (programResult.completed) {
+          return (
+            <div className="card border-green-500/30 bg-green-950/20 space-y-2 animate-slide-up">
+              <div className="font-bold text-green-400 text-lg">Program Complete!</div>
+              <div className="text-sm text-gray-300">{templateName} finished!</div>
+              <div className="text-xs text-gray-500">You've completed all sessions</div>
+            </div>
+          );
+        }
+
+        if (!programResult.passed) {
+          return (
+            <div className="card border-orange-500/30 bg-orange-950/20 space-y-2">
+              <div className="font-bold text-orange-400">
+                Day {programResult.program.currentDay} — Not quite!
+              </div>
+              <div className="text-sm text-gray-300">
+                Score: {scorePercent}% — {Math.round(programResult.requiredScore * 100)}% required to advance
+              </div>
+              <div className="text-xs text-gray-500">Keep practicing to move forward</div>
+            </div>
+          );
+        }
+
+        if (programResult.skippedTo) {
+          const skipSession = template?.sessions[(programResult.skippedTo) - 1];
+          return (
+            <div className="card border-purple-500/30 bg-purple-950/20 space-y-2 animate-slide-up">
+              <div className="font-bold text-purple-400">Skipping Ahead!</div>
+              <div className="text-sm text-gray-300">
+                Score: {scorePercent}% — jumping to Day {programResult.skippedTo}
+              </div>
+              {skipSession && (
+                <div className="text-xs text-gray-500">{skipSession.description}</div>
+              )}
+            </div>
+          );
+        }
+
+        return (
+          <div className="card border-green-500/30 bg-green-950/20 space-y-2 animate-slide-up">
+            <div className="font-bold text-green-400">
+              Day {programResult.program.currentDay - 1} Complete!
+            </div>
+            <div className="text-sm text-gray-300">
+              Advancing to Day {programResult.program.currentDay}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Save status */}
       <div className="text-center text-xs text-gray-500">
         {saveState === 'saving' && 'Saving...'}
@@ -215,14 +294,42 @@ export function ResultsScreen({
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3">
-        <button onClick={onBackToMenu} className="btn-secondary flex-1">
-          Menu
-        </button>
-        <button onClick={onPlayAgain} className="btn-primary flex-1">
-          Play Again
-        </button>
-      </div>
+      {activeProgramId && programResult ? (
+        programResult.completed ? (
+          <div className="flex gap-3">
+            <button onClick={onBackToMenu} className="btn-primary flex-1">
+              Back to Menu
+            </button>
+          </div>
+        ) : programResult.passed ? (
+          <div className="flex gap-3">
+            <button onClick={onBackToMenu} className="btn-secondary flex-1">
+              Menu
+            </button>
+            <button onClick={handleNextSession} className="btn-primary flex-1">
+              Next Session
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-3">
+            <button onClick={onBackToMenu} className="btn-secondary flex-1">
+              Menu
+            </button>
+            <button onClick={onPlayAgain} className="btn-primary flex-1">
+              Try Again
+            </button>
+          </div>
+        )
+      ) : (
+        <div className="flex gap-3">
+          <button onClick={onBackToMenu} className="btn-secondary flex-1">
+            Menu
+          </button>
+          <button onClick={onPlayAgain} className="btn-primary flex-1">
+            Play Again
+          </button>
+        </div>
+      )}
     </div>
   );
 }

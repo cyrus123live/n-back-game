@@ -131,6 +131,14 @@ export interface ProgramsResponse {
   programs: TrainingProgramRecord[];
 }
 
+export interface ProgramSessionResult {
+  program: TrainingProgramRecord;
+  completed: boolean;
+  passed: boolean;
+  skippedTo?: number;
+  requiredScore: number;
+}
+
 export const KEY_MAP: Record<string, StimulusType> = {
   a: 'position',
   s: 'color',

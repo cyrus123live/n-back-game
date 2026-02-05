@@ -10,6 +10,7 @@ import type {
   AdaptiveLevelChange,
   ProgramsResponse,
   TrainingProgramRecord,
+  ProgramSessionResult,
 } from '../types';
 
 const BASE = '/api';
@@ -97,10 +98,10 @@ export async function enrollInProgram(templateId: string): Promise<{ program: Tr
   });
 }
 
-export async function completeProgramSession(programId: string, sessionId: string): Promise<{ program: TrainingProgramRecord; completed: boolean }> {
+export async function completeProgramSession(programId: string, sessionId: string, score: number): Promise<ProgramSessionResult> {
   return fetchJSON(`/programs/${programId}/complete-session`, {
     method: 'POST',
-    body: JSON.stringify({ sessionId }),
+    body: JSON.stringify({ sessionId, score }),
   });
 }
 
