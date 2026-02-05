@@ -16,6 +16,11 @@ import type {
 const BASE = '/api';
 const USER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+function getLocalDate(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
 async function fetchJSON<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     ...options,
@@ -29,7 +34,7 @@ async function fetchJSON<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export async function getProfile(): Promise<UserProfile> {
-  return fetchJSON(`/profile?tz=${encodeURIComponent(USER_TZ)}`);
+  return fetchJSON(`/profile?tz=${encodeURIComponent(USER_TZ)}&localDate=${getLocalDate()}`);
 }
 
 export async function saveSession(
@@ -57,6 +62,7 @@ export async function saveSession(
       xpEarned,
       maxCombo,
       tz: USER_TZ,
+      localDate: getLocalDate(),
       ...(adaptiveData ? {
         adaptive: true,
         startingLevel: adaptiveData.startingLevel,

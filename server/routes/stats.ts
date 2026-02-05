@@ -28,9 +28,15 @@ router.get('/profile', async (req: Request, res: Response) => {
 
     // Check if streak is broken (missed yesterday without freeze)
     const userTz = (req.query.tz as string) || 'UTC';
-    const todayStr = formatDateInTz(new Date(), userTz);
+    // Use client-provided local date to avoid server-side timezone conversion issues (Alpine small-icu)
+    const localDate = req.query.localDate as string | undefined;
+    const todayStr = (typeof localDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(localDate))
+      ? localDate
+      : formatDateInTz(new Date(), userTz);
     const yesterdayStr = getYesterdayStr(todayStr);
-    const lastPlayedStr = profile.lastPlayedAt ? formatDateInTz(profile.lastPlayedAt, userTz) : null;
+    // Use stored lastPlayedDate (client's local date) with fallback to timezone conversion
+    const lastPlayedStr = profile.lastPlayedDate
+      ?? (profile.lastPlayedAt ? formatDateInTz(profile.lastPlayedAt, userTz) : null);
 
     let streakBroken = false;
     if (lastPlayedStr && lastPlayedStr < yesterdayStr && profile.currentStreak > 0) {

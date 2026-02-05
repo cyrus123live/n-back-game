@@ -25,14 +25,19 @@ router.post('/', async (req: Request, res: Response) => {
 
   try {
     const profile = await getOrCreateProfile(clerkUserId);
-    const { nLevel, activeStimuli, trialCount, intervalMs, results, overallScore, xpEarned, maxCombo, adaptive, startingLevel, endingLevel, levelChanges, tz } = req.body;
+    const { nLevel, activeStimuli, trialCount, intervalMs, results, overallScore, xpEarned, maxCombo, adaptive, startingLevel, endingLevel, levelChanges, tz, localDate } = req.body;
     const userTz = typeof tz === 'string' ? tz : 'UTC';
 
     // Check if first play of the day (in user's timezone)
     const now = new Date();
-    const todayStr = formatDateInTz(now, userTz);
+    // Use client-provided local date to avoid server-side timezone conversion issues (Alpine small-icu)
+    const todayStr = (typeof localDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(localDate))
+      ? localDate
+      : formatDateInTz(now, userTz);
     const yesterdayStr = getYesterdayStr(todayStr);
-    const lastPlayedStr = profile.lastPlayedAt ? formatDateInTz(profile.lastPlayedAt, userTz) : null;
+    // Use stored lastPlayedDate (client's local date) with fallback to timezone conversion
+    const lastPlayedStr = profile.lastPlayedDate
+      ?? (profile.lastPlayedAt ? formatDateInTz(profile.lastPlayedAt, userTz) : null);
     const isFirstPlayToday = lastPlayedStr !== todayStr;
 
     // Apply daily first-play bonus
@@ -95,6 +100,7 @@ router.post('/', async (req: Request, res: Response) => {
         currentStreak: newStreak,
         longestStreak,
         lastPlayedAt: now,
+        lastPlayedDate: todayStr,
         ...(earnedFreeze ? { streakFreezes: { increment: 1 } } : {}),
       },
     });

@@ -62,7 +62,7 @@ The Dockerfile uses `ARG VITE_CLERK_PUBLISHABLE_KEY` to pass it into the Docker 
 
 Schema in `prisma/schema.prisma`: `UserProfile`, `Session`, `UserAchievement`, `TrainingProgram`. Migrations live in `prisma/migrations/`. The Docker CMD runs `prisma migrate deploy` before starting the server.
 
-Session has optional adaptive fields: `adaptive`, `startingLevel`, `endingLevel`, `levelChanges`. TrainingProgram tracks enrollment, `currentDay`, `status` (active/completed/abandoned), and `completedSessions` (JSON array of session IDs).
+Session has optional adaptive fields: `adaptive`, `startingLevel`, `endingLevel`, `levelChanges`. UserProfile has `lastPlayedDate` (String, YYYY-MM-DD in user's local timezone) for reliable streak comparison alongside `lastPlayedAt` (DateTime). TrainingProgram tracks enrollment, `currentDay`, `status` (active/completed/abandoned), and `completedSessions` (JSON array of session IDs).
 
 ## Gotchas
 
@@ -83,6 +83,7 @@ Session has optional adaptive fields: `adaptive`, `startingLevel`, `endingLevel`
 - CompactStatsCard combines level/rank, streak, total sessions, XP bar, and 12-week activity heatmap into one card
 - History screen shows chart, avg-by-type, achievements, and session list
 - `server/lib/dates.ts` uses `formatToParts()` with `en-US` locale (not `en-CA`) because `node:20-alpine` ships with `small-icu` which only includes `en-US` — other locales silently fall back to wrong date formats
+- Streak dates use client-provided `localDate` (YYYY-MM-DD) instead of server-side timezone conversion. The client sends `getLocalDate()` in both `saveSession` POST body and `getProfile` query params. Server stores `lastPlayedDate` (String) alongside `lastPlayedAt` (DateTime) for reliable date comparison — avoids Alpine small-icu timezone fallback causing UTC day boundary mismatches
 
 ## Git
 
