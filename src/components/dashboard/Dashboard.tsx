@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import type { UserProfile, StatsData, DailyChallenge as DailyChallengeType, GameSettings, TrainingProgramRecord, StimulusType } from '../../types';
-import { getProfile, getStats, getDailyChallenge, getPrograms } from '../../lib/api';
+import { getProfile, getStats, getDailyChallenge, getPrograms, getQueueLength } from '../../lib/api';
 import { STIMULUS_LABELS, STIMULUS_COLORS } from '../../lib/constants';
 import { STIMULUS_KEY_MAP } from '../../types';
 import { CompactStatsCard } from './CompactStatsCard';
 import { DailyChallenge } from './DailyChallenge';
 import { ProgramCard } from '../programs/ProgramCard';
+import { InstallPrompt } from '../pwa/InstallPrompt';
 
 interface DashboardProps {
   onStart: (settings: GameSettings) => void;
@@ -94,6 +95,8 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
     );
   }
 
+  const queuedCount = getQueueLength();
+
   // Unauthenticated / no profile: show inline settings + play
   if (!profile) {
     return (
@@ -102,6 +105,14 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
           <h1 className="text-4xl font-black mb-2">Unreel</h1>
           <p className="text-gray-400">Train your working memory with the N-Back task</p>
         </div>
+
+        <InstallPrompt />
+
+        {queuedCount > 0 && (
+          <div className="card border-yellow-500/30 bg-yellow-950/20 text-sm text-yellow-300">
+            {queuedCount} session{queuedCount !== 1 ? 's' : ''} waiting to sync — will sync when online
+          </div>
+        )}
 
         {/* Inline Settings */}
         {renderSettings()}
@@ -143,6 +154,14 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
       {/* Active Program Card */}
       {activeProgram && (
         <ProgramCard program={activeProgram} onContinue={onProgramPlay} />
+      )}
+
+      <InstallPrompt />
+
+      {queuedCount > 0 && (
+        <div className="card border-yellow-500/30 bg-yellow-950/20 text-sm text-yellow-300">
+          {queuedCount} session{queuedCount !== 1 ? 's' : ''} waiting to sync — will sync when online
+        </div>
       )}
 
       {/* Inline Settings */}

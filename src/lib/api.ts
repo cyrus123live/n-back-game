@@ -12,6 +12,9 @@ import type {
   TrainingProgramRecord,
   ProgramSessionResult,
 } from '../types';
+import { enqueueSession } from './offlineQueue';
+
+export { syncQueuedSessions, getQueueLength } from './offlineQueue';
 
 const BASE = '/api';
 const USER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -49,28 +52,39 @@ export async function saveSession(
     endingLevel?: number;
     levelChanges?: AdaptiveLevelChange[];
   }
-): Promise<SessionSaveResponse> {
-  return fetchJSON('/sessions', {
-    method: 'POST',
-    body: JSON.stringify({
-      nLevel: adaptiveData?.endingLevel ?? settings.nLevel,
-      activeStimuli: settings.activeStimuli,
-      trialCount: settings.trialCount,
-      intervalMs: settings.intervalMs,
-      results,
-      overallScore,
-      xpEarned,
-      maxCombo,
-      tz: USER_TZ,
-      localDate: getLocalDate(),
-      ...(adaptiveData ? {
-        adaptive: true,
-        startingLevel: adaptiveData.startingLevel,
-        endingLevel: adaptiveData.endingLevel,
-        levelChanges: adaptiveData.levelChanges,
-      } : {}),
-    }),
-  });
+): Promise<SessionSaveResponse | { queued: true }> {
+  const payload = {
+    nLevel: adaptiveData?.endingLevel ?? settings.nLevel,
+    activeStimuli: settings.activeStimuli,
+    trialCount: settings.trialCount,
+    intervalMs: settings.intervalMs,
+    results,
+    overallScore,
+    xpEarned,
+    maxCombo,
+    tz: USER_TZ,
+    localDate: getLocalDate(),
+    ...(adaptiveData ? {
+      adaptive: true,
+      startingLevel: adaptiveData.startingLevel,
+      endingLevel: adaptiveData.endingLevel,
+      levelChanges: adaptiveData.levelChanges,
+    } : {}),
+  };
+
+  try {
+    return await fetchJSON<SessionSaveResponse>('/sessions', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  } catch (err) {
+    // Queue offline if network error
+    if (!navigator.onLine || (err instanceof TypeError)) {
+      enqueueSession(payload as Parameters<typeof enqueueSession>[0]);
+      return { queued: true };
+    }
+    throw err;
+  }
 }
 
 export async function getSessions(

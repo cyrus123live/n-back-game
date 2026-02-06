@@ -6,7 +6,7 @@ Strengthen working memory for as many people as possible. Every design and engin
 
 ## Quick Reference
 
-- **Stack**: React 18 + TypeScript + Vite (frontend), Express + Prisma (backend), Tailwind CSS, Recharts
+- **Stack**: React 18 + TypeScript + Vite (frontend), Express + Prisma (backend), Tailwind CSS, Recharts, `vite-plugin-pwa`
 - **Auth**: Clerk (`@clerk/clerk-react` frontend, `@clerk/express` backend)
 - **DB**: PostgreSQL via Prisma ORM
 - **Deploy**: Dockerized single container on Railway
@@ -30,7 +30,8 @@ Strengthen working memory for as many people as possible. Every design and engin
 - **Programs**: `lib/programs.ts` - 3 training program templates (beginner/intermediate/advanced, 20 sessions each) with score-gated progression (70% to advance, 90% to skip ahead)
 - **Tutorial**: `lib/tutorialData.ts` - pre-scripted 8-trial 2-back walkthrough with position + color stimuli. Auto-shows on first visit (checks `localStorage['unreel-tutorial-seen']`)
 - **State**: No state library; `App.tsx` manages view routing via `useState`, game state lives in `useGameLoop`
-- **Components**: `components/game/` (gameplay), `components/dashboard/` (home + inline settings), `components/results/`, `components/history/` (charts, avg-by-type, achievements, session list), `components/layout/`, `components/tutorial/`, `components/programs/`
+- **Components**: `components/game/` (gameplay), `components/dashboard/` (home + inline settings), `components/results/`, `components/history/` (charts, avg-by-type, achievements, session list), `components/layout/`, `components/tutorial/`, `components/programs/`, `components/pwa/` (install prompt)
+- **Offline queue**: `lib/offlineQueue.ts` — stores failed session saves in localStorage (`unreel-offline-sessions`), syncs when back online
 
 ### Backend (`server/`)
 - `index.ts` - Express entry, serves Vite build from `dist/client/` + API routes
@@ -89,6 +90,10 @@ Session has optional adaptive fields: `adaptive`, `startingLevel`, `endingLevel`
 - History screen shows chart, avg-by-type, achievements, and session list
 - `server/lib/dates.ts` uses `formatToParts()` with `en-US` locale (not `en-CA`) because `node:20-alpine` ships with `small-icu` which only includes `en-US` — other locales silently fall back to wrong date formats
 - Streak dates use client-provided `localDate` (YYYY-MM-DD) instead of server-side timezone conversion. The client sends `getLocalDate()` in both `saveSession` POST body and `getProfile` query params. Server stores `lastPlayedDate` (String) alongside `lastPlayedAt` (DateTime) for reliable date comparison — avoids Alpine small-icu timezone fallback causing UTC day boundary mismatches
+- PWA service worker (`sw.js`) is generated at build time by `vite-plugin-pwa` (Workbox). Server serves `sw.js` with `Cache-Control: no-cache` so browsers always check for updates
+- API routes use `NetworkOnly` caching strategy — never served from SW cache. Clerk requires network for auth
+- Offline session queue lives in localStorage (`unreel-offline-sessions`). When `saveSession` fails due to network error, session is queued. App syncs on page load and on `online` event. Queued sessions skip XP bar, achievements, confetti, and streak updates on ResultsScreen
+- Install prompt (`beforeinstallprompt`) only fires on Android/desktop Chrome — not available on iOS. Dismiss flag stored in `localStorage['unreel-install-dismissed']`. Hidden when app is already installed (checks `display-mode: standalone`)
 
 ## Git
 

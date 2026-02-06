@@ -38,7 +38,7 @@ export function ResultsScreen({
   onNextProgramSession,
   onStreakUpdate,
 }: ResultsScreenProps) {
-  const [saveState, setSaveState] = useState<'saving' | 'saved' | 'error' | 'offline'>('saving');
+  const [saveState, setSaveState] = useState<'saving' | 'saved' | 'error' | 'queued'>('saving');
   const [serverXP, setServerXP] = useState(xpEarned);
   const [isFirstPlay, setIsFirstPlay] = useState(false);
   const [leveledUp, setLeveledUp] = useState(false);
@@ -63,6 +63,13 @@ export function ResultsScreen({
           settings, results, overallScore, xpEarned, maxCombo,
           adaptive ? { adaptive: true, startingLevel, endingLevel } : undefined
         );
+
+        // Offline queued — skip server-dependent UI
+        if ('queued' in response) {
+          setSaveState('queued');
+          return;
+        }
+
         setServerXP(response.xpEarned);
         setIsFirstPlay(response.isFirstPlayToday);
         setLeveledUp(response.leveledUp);
@@ -396,6 +403,7 @@ export function ResultsScreen({
       <div className="text-center text-xs text-gray-500">
         {saveState === 'saving' && 'Saving...'}
         {saveState === 'saved' && 'Session saved'}
+        {saveState === 'queued' && 'Session saved offline — will sync when you reconnect'}
         {saveState === 'error' && 'Could not save session (sign in to save progress)'}
       </div>
 

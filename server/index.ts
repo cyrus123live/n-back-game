@@ -24,6 +24,14 @@ app.use('/api/programs', programRoutes);
 
 // Serve static files in production
 const clientPath = path.join(__dirname, '../client');
+
+// Service worker: no-cache so browsers always check for updates
+app.get('/sw.js', (_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Service-Worker-Allowed', '/');
+  next();
+});
+
 app.use(express.static(clientPath));
 app.get('*', (_req, res) => {
   res.sendFile(path.join(clientPath, 'index.html'));

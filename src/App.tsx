@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { GameSettings, SessionResults, DailyChallenge } from './types';
-import { getProfile } from './lib/api';
+import { getProfile, syncQueuedSessions } from './lib/api';
 import { Navbar } from './components/layout/Navbar';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { GameScreen } from './components/game/GameScreen';
@@ -33,6 +33,23 @@ export default function App() {
       .then((p) => setCurrentStreak(p.currentStreak))
       .catch(() => {});
   }, [view]);
+
+  // Sync offline-queued sessions on load and when coming back online
+  useEffect(() => {
+    const sync = () => {
+      syncQueuedSessions().then(({ synced }) => {
+        if (synced > 0) {
+          getProfile()
+            .then((p) => setCurrentStreak(p.currentStreak))
+            .catch(() => {});
+        }
+      });
+    };
+
+    sync();
+    window.addEventListener('online', sync);
+    return () => window.removeEventListener('online', sync);
+  }, []);
 
   const handleDailyChallenge = useCallback((challenge: DailyChallenge) => {
     setGameSettings({
