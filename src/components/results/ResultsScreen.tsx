@@ -7,7 +7,6 @@ import { XPAnimation } from './XPAnimation';
 import { saveSession, completeProgramSession } from '../../lib/api';
 import { getTemplate } from '../../lib/programs';
 import { AchievementIcon } from '../icons/AchievementIcon';
-import { FlameIcon } from '../icons/FlameIcon';
 
 interface ResultsScreenProps {
   settings: GameSettings;
@@ -207,11 +206,11 @@ export function ResultsScreen({
   const scorePercent = Math.round(overallScore * 100);
 
   return (
-    <div className="max-w-lg mx-auto space-y-6 py-10 px-5">
+    <div className="max-w-lg mx-auto space-y-4 py-8 px-5">
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-heading font-bold text-text-primary">Round Complete</h1>
         <div
-          className={`text-6xl font-black ${
+          className={`text-5xl font-black ${
             scorePercent >= 90 ? 'text-primary-500' :
             scorePercent >= 70 ? 'text-[#c4a035]' :
             scorePercent >= 50 ? 'text-[#c4a035]/70' :
@@ -319,25 +318,9 @@ export function ResultsScreen({
                   }}
                 />
               </div>
-              <div className="flex gap-4 text-xs text-text-muted">
-                <span>Hits: {result.hits}</span>
-                <span>Misses: {result.misses}</span>
-                <span>False alarms: {result.falseAlarms}</span>
-              </div>
             </div>
           );
         })}
-      </div>
-
-      {/* Combo Stats */}
-      <div className="card flex items-center justify-between">
-        <div>
-          <div className="text-sm text-text-muted">Max Combo</div>
-          <div className="text-2xl font-bold text-text-primary">{maxCombo}</div>
-        </div>
-        {maxCombo >= 10 && (
-          <FlameIcon className={`w-8 h-8 ${maxCombo >= 15 ? 'text-[#c4a035]' : 'text-[#8b6eae]'}`} />
-        )}
       </div>
 
       {/* Program Progress */}
@@ -396,13 +379,17 @@ export function ResultsScreen({
         );
       })()}
 
-      {/* Save status */}
-      <div className="text-center text-xs text-text-muted">
-        {saveState === 'saving' && 'Saving...'}
-        {saveState === 'saved' && 'Session saved'}
-        {saveState === 'queued' && 'Session saved offline — will sync when you reconnect'}
-        {saveState === 'error' && 'Could not save session (sign in to save progress)'}
-      </div>
+      {/* Save status (only show non-success states) */}
+      {saveState === 'queued' && (
+        <div className="text-center text-xs text-text-muted">
+          Session saved offline — will sync when you reconnect
+        </div>
+      )}
+      {saveState === 'error' && (
+        <div className="text-center text-xs text-text-muted">
+          Could not save session (sign in to save progress)
+        </div>
+      )}
 
       {/* Tomorrow Hook */}
       {(() => {
