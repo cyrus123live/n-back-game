@@ -95,7 +95,7 @@ Session has optional adaptive fields: `adaptive`, `startingLevel`, `endingLevel`
 
 **Buttons**: Primary = green bg + white text + `active:scale-[0.98]`. Secondary = outline style (transparent bg, warm gray border)
 
-**Semantic Tailwind tokens** (defined in `tailwind.config.js`): `surface`, `card`, `card-border`, `surface-secondary`, `text-primary`, `text-secondary`, `text-muted`, `primary-50` through `primary-950`
+**Semantic Tailwind tokens** (defined in `tailwind.config.js`): `surface`, `card`, `card-border`, `secondary-surface`, `text-primary`, `text-secondary`, `text-muted`, `primary-50` through `primary-950`
 
 **Dashboard greeting**: Time-of-day based — "Good morning" (<12), "Good afternoon" (<17), "Good evening" (else). Subtitle: "Ready to train?" (new users) / "Welcome back" (returning)
 
