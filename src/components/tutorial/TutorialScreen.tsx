@@ -131,7 +131,7 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!showingStimulus) return;
-      const keyMap: Record<string, StimulusType> = { a: 'position', l: 'audio' };
+      const keyMap: Record<string, StimulusType> = { a: 'position', s: 'color' };
       const type = keyMap[e.key.toLowerCase()];
       if (type && TUTORIAL_STIMULI.includes(type)) {
         handleMatch(type);
