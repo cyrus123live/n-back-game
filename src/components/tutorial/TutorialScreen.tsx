@@ -4,7 +4,6 @@ import { TUTORIAL_SEQUENCE, TUTORIAL_STEPS, TUTORIAL_N_LEVEL, TUTORIAL_STIMULI }
 import { isMatch } from '../../lib/sequence';
 import { GameGrid } from '../game/GameGrid';
 import { MatchButtons } from '../game/MatchButtons';
-import type { ButtonFeedback } from '../game/MatchButtons';
 import { TrialProgress } from '../game/TrialProgress';
 import { TutorialOverlay } from './TutorialOverlay';
 
@@ -20,7 +19,6 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
   const [showingStimulus, setShowingStimulus] = useState(false);
   const [pressedThisTrial, setPressedThisTrial] = useState<Set<StimulusType>>(new Set());
   const [flashClass, setFlashClass] = useState('');
-  const [buttonFeedback, setButtonFeedback] = useState<Map<StimulusType, ButtonFeedback>>(new Map());
   const [phase, setPhase] = useState<'tutorial' | 'practice' | 'done'>('tutorial');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -58,31 +56,22 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
   }, [paused, showingStimulus, currentTrial]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const advanceToNextTrial = useCallback(() => {
-    // Evaluate end-of-trial feedback: show missed matches on buttons
+    // Evaluate end-of-trial feedback via grid flash
     if (currentTrial >= TUTORIAL_N_LEVEL) {
-      const endFeedback = new Map<StimulusType, ButtonFeedback>();
       let anyWrong = false;
       for (const type of TUTORIAL_STIMULI) {
         const wasMatch = isMatch(sequence, currentTrial, TUTORIAL_N_LEVEL, type);
         const responded = pressedThisTrial.has(type);
-        if (wasMatch && !responded) {
-          endFeedback.set(type, 'missed');
+        if ((wasMatch && !responded) || (!wasMatch && responded)) {
           anyWrong = true;
-        } else if (!wasMatch && responded) {
-          endFeedback.set(type, 'wrong');
-          anyWrong = true;
-        } else if (wasMatch && responded) {
-          endFeedback.set(type, 'correct');
         }
       }
-      setButtonFeedback(endFeedback);
       setFlashClass(anyWrong ? 'flash-orange' : 'flash-green');
 
       // Hold feedback briefly, then advance
       const next = currentTrial + 1;
       setTimeout(() => {
         setFlashClass('');
-        setButtonFeedback(new Map());
 
         if (next >= sequence.length) {
           setPhase('done');
@@ -109,7 +98,6 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
     }
 
     setPressedThisTrial(new Set());
-    setButtonFeedback(new Map());
     setShowingStimulus(false);
 
     setTimeout(() => {
@@ -253,7 +241,6 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
           onMatch={handleMatch}
           pressedThisTrial={pressedThisTrial}
           disabled={!showingStimulus || (paused && !currentStep?.waitForKey)}
-          feedback={buttonFeedback.size > 0 ? buttonFeedback : undefined}
         />
 
         {phase === 'practice' && (
