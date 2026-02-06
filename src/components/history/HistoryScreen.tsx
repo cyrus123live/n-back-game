@@ -71,16 +71,14 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
   const chartData = useMemo(() => {
     if (allSessions.length === 0) return { data: [], levels: [] as number[] };
 
-    // Group by date and N-level, compute average accuracy
-    const byDateLevel: Record<string, Record<number, { total: number; count: number }>> = {};
+    // Group by date and N-level, track best score
+    const byDateLevel: Record<string, Record<number, number>> = {};
 
     for (const s of allSessions) {
       const dt = new Date(s.createdAt);
       const date = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
       if (!byDateLevel[date]) byDateLevel[date] = {};
-      if (!byDateLevel[date][s.nLevel]) byDateLevel[date][s.nLevel] = { total: 0, count: 0 };
-      byDateLevel[date][s.nLevel].total += s.overallScore;
-      byDateLevel[date][s.nLevel].count += 1;
+      byDateLevel[date][s.nLevel] = Math.max(byDateLevel[date][s.nLevel] ?? 0, s.overallScore);
     }
 
     const levels = [...new Set(allSessions.map((s) => s.nLevel))].sort();
@@ -90,8 +88,8 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
       .map(([date, levelData]) => {
         const row: Record<string, number | string> = { date };
         for (const level of levels) {
-          if (levelData[level]) {
-            row[`${level}-back`] = Math.round((levelData[level].total / levelData[level].count) * 100);
+          if (levelData[level] != null) {
+            row[`${level}-back`] = Math.round(levelData[level] * 100);
           }
         }
         return row;
@@ -150,7 +148,7 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
           {chartData.data.length > 0 && (
             <div className="card">
               <h3 className="text-sm text-text-muted font-medium uppercase tracking-wider mb-4">
-                Average Accuracy by Day
+                Best Score by Day
               </h3>
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={chartData.data}>

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import type { UserProfile, StatsData, DailyChallenge as DailyChallengeType, GameSettings, TrainingProgramRecord, StimulusType } from '../../types';
 import { getProfile, getStats, getDailyChallenge, getPrograms, getQueueLength } from '../../lib/api';
 import { STIMULUS_LABELS, STIMULUS_COLORS } from '../../lib/constants';
-import { STIMULUS_KEY_MAP } from '../../types';
 import { CompactStatsCard } from './CompactStatsCard';
 import { DailyChallenge } from './DailyChallenge';
 import { ProgramCard } from '../programs/ProgramCard';
@@ -253,7 +252,7 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
           <label className="block text-sm text-text-muted mb-3 font-medium">
             Stimuli ({activeStimuli.length} active)
           </label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2">
             {ALL_STIMULI.map((type) => {
               const active = activeStimuli.includes(type);
               return (
@@ -261,10 +260,10 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
                   key={type}
                   onClick={() => toggleStimulus(type)}
                   className={`
-                    flex items-center gap-2 px-3 py-2 rounded-xl transition-all text-sm font-medium
-                    border-2
+                    flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition-all text-xs font-medium
+                    border-2 hover:scale-[1.03] active:scale-[0.98]
                     ${active
-                      ? ''
+                      ? 'hover:brightness-95'
                       : 'border-card-border bg-secondary-surface hover:bg-card-border/50'
                     }
                   `}
@@ -281,7 +280,6 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
                   <span className={active ? 'text-text-primary' : 'text-text-muted'}>
                     {STIMULUS_LABELS[type]}
                   </span>
-                  <span className="key-hint text-xs">{STIMULUS_KEY_MAP[type]}</span>
                 </button>
               );
             })}
