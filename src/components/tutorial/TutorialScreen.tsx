@@ -4,6 +4,7 @@ import { TUTORIAL_SEQUENCE, TUTORIAL_STEPS, TUTORIAL_N_LEVEL, TUTORIAL_STIMULI }
 import { isMatch } from '../../lib/sequence';
 import { GameGrid } from '../game/GameGrid';
 import { MatchButtons } from '../game/MatchButtons';
+import type { ButtonFeedback } from '../game/MatchButtons';
 import { TrialProgress } from '../game/TrialProgress';
 import { TutorialOverlay } from './TutorialOverlay';
 
@@ -19,6 +20,7 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
   const [showingStimulus, setShowingStimulus] = useState(false);
   const [pressedThisTrial, setPressedThisTrial] = useState<Set<StimulusType>>(new Set());
   const [flashClass, setFlashClass] = useState('');
+  const [buttonFeedback, setButtonFeedback] = useState<Map<StimulusType, ButtonFeedback>>(new Map());
   const [phase, setPhase] = useState<'tutorial' | 'practice' | 'done'>('tutorial');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -56,18 +58,47 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
   }, [paused, showingStimulus, currentTrial]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const advanceToNextTrial = useCallback(() => {
-    // Evaluate feedback for current trial
+    // Evaluate end-of-trial feedback: show missed matches on buttons
     if (currentTrial >= TUTORIAL_N_LEVEL) {
+      const endFeedback = new Map<StimulusType, ButtonFeedback>();
       let anyWrong = false;
       for (const type of TUTORIAL_STIMULI) {
         const wasMatch = isMatch(sequence, currentTrial, TUTORIAL_N_LEVEL, type);
         const responded = pressedThisTrial.has(type);
-        if ((wasMatch && !responded) || (!wasMatch && responded)) {
+        if (wasMatch && !responded) {
+          endFeedback.set(type, 'missed');
           anyWrong = true;
+        } else if (!wasMatch && responded) {
+          endFeedback.set(type, 'wrong');
+          anyWrong = true;
+        } else if (wasMatch && responded) {
+          endFeedback.set(type, 'correct');
         }
       }
+      setButtonFeedback(endFeedback);
       setFlashClass(anyWrong ? 'flash-orange' : 'flash-green');
-      setTimeout(() => setFlashClass(''), 400);
+
+      // Hold feedback briefly, then advance
+      const next = currentTrial + 1;
+      setTimeout(() => {
+        setFlashClass('');
+        setButtonFeedback(new Map());
+
+        if (next >= sequence.length) {
+          setPhase('done');
+          setShowingStimulus(false);
+          return;
+        }
+
+        setPressedThisTrial(new Set());
+        setShowingStimulus(false);
+
+        setTimeout(() => {
+          setCurrentTrial(next);
+          setShowingStimulus(true);
+        }, 300);
+      }, 600);
+      return;
     }
 
     const next = currentTrial + 1;
@@ -78,6 +109,7 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
     }
 
     setPressedThisTrial(new Set());
+    setButtonFeedback(new Map());
     setShowingStimulus(false);
 
     setTimeout(() => {
@@ -90,12 +122,22 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
     if (pressedThisTrial.has(type)) return;
     setPressedThisTrial((prev) => new Set(prev).add(type));
 
+    // Instant feedback: correct press or false alarm
+    if (currentTrial >= TUTORIAL_N_LEVEL) {
+      const wasMatch = isMatch(sequence, currentTrial, TUTORIAL_N_LEVEL, type);
+      setButtonFeedback((prev) => {
+        const next = new Map(prev);
+        next.set(type, wasMatch ? 'correct' : 'wrong');
+        return next;
+      });
+    }
+
     // If current step is waiting for this key, advance the step
     if (currentStep?.waitForKey === type) {
       setStepIndex((prev) => prev + 1);
       setPaused(false);
     }
-  }, [pressedThisTrial, currentStep]);
+  }, [pressedThisTrial, currentStep, currentTrial, sequence]);
 
   const handleNextStep = useCallback(() => {
     const step = TUTORIAL_STEPS[stepIndex];
@@ -205,6 +247,7 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
           onMatch={handleMatch}
           pressedThisTrial={pressedThisTrial}
           disabled={!showingStimulus || (paused && !currentStep?.waitForKey)}
+          feedback={buttonFeedback.size > 0 ? buttonFeedback : undefined}
         />
 
         {phase === 'practice' && (
