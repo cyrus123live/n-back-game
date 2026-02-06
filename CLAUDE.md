@@ -88,7 +88,7 @@ Dark mode uses CSS custom properties defined in `src/index.css` (`:root` and `.d
 
 **Stimulus Colors** (softened, not neon): Position `#577fb5`, Color `#4a9ea8`, Shape `#8b6eae`, Number `#c4a035`, Audio `#b85c4e`
 
-**Error-as-guidance feedback pattern**: Correct → green flash, Miss → gray flash (`flash-miss`), False alarm → amber flash (`flash-orange`). Low scores use gray text, never red.
+**Error-as-guidance feedback pattern**: Correct → green flash + tone, Miss/False alarm → gray flash (`flash-miss`), no error sound. Low scores use gray text, never red.
 
 **Score color thresholds**: >=90% green (`#538d4e`), >=70% gold (`#c4a035`), >=50% amber (`#c47a3e`), <50% gray (text-muted)
 

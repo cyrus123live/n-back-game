@@ -76,10 +76,6 @@ export function useAudio() {
     playTone(880, 0.15, 'sine');
   }, [playTone]);
 
-  const playIncorrect = useCallback(() => {
-    playTone(220, 0.2, 'square');
-  }, [playTone]);
-
   const playComboTone = useCallback(
     (combo: number) => {
       // Rising pitch with combo
@@ -89,5 +85,5 @@ export function useAudio() {
     [playTone]
   );
 
-  return { speakLetter, playCorrect, playIncorrect, playComboTone, playTone };
+  return { speakLetter, playCorrect, playComboTone, playTone };
 }

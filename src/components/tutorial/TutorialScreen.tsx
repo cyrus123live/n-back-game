@@ -66,7 +66,7 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
           anyWrong = true;
         }
       }
-      setFlashClass(anyWrong ? 'flash-orange' : 'flash-green');
+      setFlashClass(anyWrong ? 'flash-miss' : 'flash-green');
 
       // Hold feedback briefly, then advance
       const next = currentTrial + 1;

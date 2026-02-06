@@ -28,23 +28,18 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
   const [flashClass, setFlashClass] = useState('');
   const [pressedThisTrial, setPressedThisTrial] = useState<Set<StimulusType>>(new Set());
 
-  const { speakLetter, playCorrect, playIncorrect, playComboTone } = useAudio();
+  const { speakLetter, playCorrect, playComboTone } = useAudio();
 
   const handleTrialAdvance = useCallback(
     (feedback: Map<StimulusType, 'hit' | 'miss' | 'falseAlarm' | 'correctRejection'>) => {
-      let hasWrong = false;
-      let hasMiss = false;
+      let hasError = false;
 
       for (const [, result] of feedback) {
-        if (result === 'falseAlarm') hasWrong = true;
-        if (result === 'miss') hasMiss = true;
+        if (result === 'falseAlarm' || result === 'miss') hasError = true;
       }
 
-      if (hasWrong) {
+      if (hasError) {
         setFlashClass('flash-miss');
-        playIncorrect();
-      } else if (hasMiss) {
-        setFlashClass('flash-orange');
       } else {
         setFlashClass('flash-green');
         playCorrect();
@@ -53,7 +48,7 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
       setPressedThisTrial(new Set());
       setTimeout(() => setFlashClass(''), 400);
     },
-    [playCorrect, playIncorrect]
+    [playCorrect]
   );
 
   const {
