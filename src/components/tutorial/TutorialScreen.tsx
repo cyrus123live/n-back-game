@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import type { StimulusType } from '../../types';
 import { TUTORIAL_SEQUENCE, TUTORIAL_STEPS, TUTORIAL_N_LEVEL, TUTORIAL_STIMULI } from '../../lib/tutorialData';
 import { isMatch } from '../../lib/sequence';
-import { useAudio } from '../../hooks/useAudio';
 import { GameGrid } from '../game/GameGrid';
 import { MatchButtons } from '../game/MatchButtons';
 import { TrialProgress } from '../game/TrialProgress';
@@ -22,7 +21,6 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
   const [flashClass, setFlashClass] = useState('');
   const [phase, setPhase] = useState<'tutorial' | 'practice' | 'done'>('tutorial');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { speakLetter } = useAudio();
 
   const sequence = TUTORIAL_SEQUENCE;
   const currentStep = stepIndex < TUTORIAL_STEPS.length ? TUTORIAL_STEPS[stepIndex] : null;
@@ -43,13 +41,6 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
       }
     }
   }, [currentTrial, showingStimulus, currentStep]);
-
-  // Show stimulus and speak audio
-  useEffect(() => {
-    if (showingStimulus && currentTrial < sequence.length) {
-      speakLetter(sequence[currentTrial].audio);
-    }
-  }, [showingStimulus, currentTrial]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-advance trial timer
   useEffect(() => {
