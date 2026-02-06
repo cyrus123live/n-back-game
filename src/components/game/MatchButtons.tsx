@@ -13,41 +13,18 @@ interface MatchButtonsProps {
 }
 
 export function MatchButtons({ activeStimuli, onMatch, pressedThisTrial, disabled, feedback }: MatchButtonsProps) {
-  const leftHand: StimulusType[] = ['position', 'color', 'shape'];
-  const rightHand: StimulusType[] = ['number', 'audio'];
-
-  const leftActive = leftHand.filter((s) => activeStimuli.includes(s));
-  const rightActive = rightHand.filter((s) => activeStimuli.includes(s));
-
   return (
-    <div className="flex items-center justify-center gap-8 mt-4">
-      <div className="flex gap-2">
-        {leftActive.map((type) => (
-          <MatchButton
-            key={type}
-            type={type}
-            pressed={pressedThisTrial.has(type)}
-            onMatch={onMatch}
-            disabled={disabled}
-            feedback={feedback?.get(type)}
-          />
-        ))}
-      </div>
-      {leftActive.length > 0 && rightActive.length > 0 && (
-        <div className="w-px h-12 bg-card-border" />
-      )}
-      <div className="flex gap-2">
-        {rightActive.map((type) => (
-          <MatchButton
-            key={type}
-            type={type}
-            pressed={pressedThisTrial.has(type)}
-            onMatch={onMatch}
-            disabled={disabled}
-            feedback={feedback?.get(type)}
-          />
-        ))}
-      </div>
+    <div className="flex gap-2 mt-4 w-full max-w-md px-2">
+      {activeStimuli.map((type) => (
+        <MatchButton
+          key={type}
+          type={type}
+          pressed={pressedThisTrial.has(type)}
+          onMatch={onMatch}
+          disabled={disabled}
+          feedback={feedback?.get(type)}
+        />
+      ))}
     </div>
   );
 }
@@ -84,9 +61,9 @@ function MatchButton({
       onClick={() => onMatch(type)}
       disabled={disabled}
       className={`
-        relative flex flex-col items-center gap-1 px-4 py-3 rounded-xl
+        relative flex-1 flex flex-col items-center gap-1 py-3 rounded-xl
         font-semibold text-sm transition-all duration-150 active:scale-[0.98]
-        border-2 min-w-[80px]
+        border-2
         ${feedback
           ? ''
           : pressed

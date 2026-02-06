@@ -1,4 +1,5 @@
 import type { TutorialStep } from '../../lib/tutorialData';
+import { STIMULUS_LABELS } from '../../lib/constants';
 
 interface TutorialOverlayProps {
   step: TutorialStep;
@@ -9,7 +10,7 @@ interface TutorialOverlayProps {
 }
 
 export function TutorialOverlay({ step, onNext, onSkip, stepIndex, totalSteps }: TutorialOverlayProps) {
-  const keyLabel = step.waitForKey === 'position' ? 'Position' : 'Audio';
+  const keyLabel = step.waitForKey ? STIMULUS_LABELS[step.waitForKey] : '';
 
   return (
     <div className="fixed inset-0 z-40 pointer-events-none">

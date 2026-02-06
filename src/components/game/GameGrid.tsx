@@ -66,7 +66,7 @@ export function GameGrid({ stimulus, activeStimuli, flashClass }: GameGridProps)
               transition-all duration-150
               ${stimulus && stimulus.position === i
                 ? 'bg-card border-card-border shadow-sm'
-                : 'bg-card/50 border-card-border/50'
+                : 'bg-secondary-surface border-transparent'
               }
             `}
           >
