@@ -145,7 +145,7 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 py-4">
+    <div className="flex flex-col items-center gap-4 py-4 px-4">
       <div className="flex items-center justify-between w-full max-w-md px-2">
         <ComboCounter combo={gameState.combo} maxCombo={gameState.maxCombo} />
         <button
