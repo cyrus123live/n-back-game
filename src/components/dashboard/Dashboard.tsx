@@ -6,6 +6,7 @@ import { CompactStatsCard } from './CompactStatsCard';
 import { DailyChallenge } from './DailyChallenge';
 import { ProgramCard } from '../programs/ProgramCard';
 import { InstallPrompt } from '../pwa/InstallPrompt';
+import { StimulusIcon } from '../icons/StimulusIcon';
 
 interface DashboardProps {
   onStart: (settings: GameSettings) => void;
@@ -287,11 +288,12 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
                     }
                   }}
                 >
-                  <div
-                    className={`w-2.5 h-2.5 rounded-full transition-all ${active ? '' : 'opacity-30'}`}
-                    style={{ backgroundColor: STIMULUS_COLORS[type] }}
+                  <StimulusIcon
+                    type={type}
+                    className={`w-5 h-5 transition-all ${active ? '' : 'opacity-40'}`}
+                    style={{ color: STIMULUS_COLORS[type] }}
                   />
-                  <span className={active ? 'text-text-primary' : 'text-text-muted'}>
+                  <span className={`text-[10px] ${active ? 'text-text-primary' : 'text-text-muted'}`}>
                     {STIMULUS_LABELS[type]}
                   </span>
                 </button>

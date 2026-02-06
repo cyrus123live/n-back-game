@@ -1,6 +1,7 @@
 import type { StimulusType } from '../../types';
 import { STIMULUS_KEY_MAP } from '../../types';
-import { STIMULUS_LABELS, STIMULUS_COLORS } from '../../lib/constants';
+import { STIMULUS_COLORS } from '../../lib/constants';
+import { StimulusIcon } from '../icons/StimulusIcon';
 
 interface MatchButtonsProps {
   activeStimuli: StimulusType[];
@@ -37,7 +38,6 @@ function MatchButton({
   disabled: boolean;
 }) {
   const key = STIMULUS_KEY_MAP[type];
-  const label = STIMULUS_LABELS[type];
   const color = STIMULUS_COLORS[type];
 
   return (
@@ -45,7 +45,7 @@ function MatchButton({
       onClick={() => onMatch(type)}
       disabled={disabled}
       className={`
-        relative flex-1 flex flex-col items-center gap-1 py-3 rounded-xl
+        relative flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl
         font-semibold text-sm transition-all duration-150 active:scale-[0.98]
         border-2
         ${pressed
@@ -56,7 +56,7 @@ function MatchButton({
       `}
       style={pressed ? { borderColor: color, backgroundColor: `${color}15` } : undefined}
     >
-      <span className="text-xs text-text-muted uppercase tracking-wider">{label}</span>
+      <StimulusIcon type={type} className={`w-5 h-5 ${pressed ? '' : 'text-text-muted'}`} style={pressed ? { color } : undefined} />
       <span className="key-hint" style={pressed ? { backgroundColor: color, color: 'white' } : {}}>
         {key}
       </span>
