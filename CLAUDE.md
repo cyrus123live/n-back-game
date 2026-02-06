@@ -7,6 +7,8 @@ Strengthen working memory for as many people as possible. Every design and engin
 ## Quick Reference
 
 - **Stack**: React 18 + TypeScript + Vite (frontend), Express + Prisma (backend), Tailwind CSS, Recharts, `vite-plugin-pwa`
+- **Fonts**: Libre Franklin (headings, 700/800), Inter (body, 400/500/600) via Google Fonts
+- **Design**: Light, warm, NYT Games-inspired theme — off-white backgrounds, white cards with subtle shadows, warm green (`#538d4e`) primary accent
 - **Auth**: Clerk (`@clerk/clerk-react` frontend, `@clerk/express` backend)
 - **DB**: PostgreSQL via Prisma ORM
 - **Deploy**: Dockerized single container on Railway
@@ -65,6 +67,38 @@ Schema in `prisma/schema.prisma`: `UserProfile`, `Session`, `UserAchievement`, `
 
 Session has optional adaptive fields: `adaptive`, `startingLevel`, `endingLevel`, `levelChanges`. UserProfile has `lastPlayedDate` (String, YYYY-MM-DD in user's local timezone) for reliable streak comparison alongside `lastPlayedAt` (DateTime). TrainingProgram tracks enrollment, `currentDay`, `status` (active/completed/abandoned), and `completedSessions` (JSON array of session IDs).
 
+## Design System
+
+### Theme: Light, Warm, Restrained (NYT Games-inspired)
+
+**Color Palette**:
+| Role | Value |
+|------|-------|
+| Page background | `#fafaf8` (warm off-white) |
+| Card background | `#ffffff` + `shadow-sm` |
+| Card border | `#e5e2d9` (warm gray) |
+| Secondary surface | `#f5f5f0` (warm light gray) |
+| Primary accent | `#538d4e` (warm green) |
+| Text primary | `#1a1a1a` |
+| Text secondary | `#3a3a3a` |
+| Text muted | `#787774` |
+
+**Stimulus Colors** (softened, not neon): Position `#577fb5`, Color `#538d4e`, Shape `#8b6eae`, Number `#c4a035`, Audio `#b85c4e`
+
+**Error-as-guidance feedback pattern**: Correct → green flash, Miss → gray flash (`flash-miss`), False alarm → amber flash (`flash-orange`). Low scores use gray text, never red.
+
+**Score color thresholds**: >=90% green (`#538d4e`), >=70% gold (`#c4a035`), >=50% amber (`#c47a3e`), <50% gray (text-muted)
+
+**Animations**: `fade-in` (0.2s opacity), `fade-in-up` (0.25s translate+opacity), `bounce-in` (softened, scale 0.95→1), `shake` (3px). Removed: `glow`, `pulse-fast`, all `edge-glow-*` effects.
+
+**Cards**: `bg-card border border-card-border rounded-2xl p-8 shadow-sm` (no glassmorphism)
+
+**Buttons**: Primary = green bg + white text + `active:scale-[0.98]`. Secondary = outline style (transparent bg, warm gray border)
+
+**Semantic Tailwind tokens** (defined in `tailwind.config.js`): `surface`, `card`, `card-border`, `surface-secondary`, `text-primary`, `text-secondary`, `text-muted`, `primary-50` through `primary-950`
+
+**Dashboard greeting**: Time-of-day based — "Good morning" (<12), "Good afternoon" (<17), "Good evening" (else). Subtitle: "Ready to train?" (new users) / "Welcome back" (returning)
+
 ## Gotchas
 
 - Clerk components (`SignedIn`, `SignedOut`, etc.) require `ClerkProvider` ancestor - app throws on startup without the publishable key
@@ -83,10 +117,10 @@ Session has optional adaptive fields: `adaptive`, `startingLevel`, `endingLevel`
 - GameGrid renders a single centered square when `position` is not in `activeStimuli`
 - ResultsScreen propagates `newStreak` back to App.tsx via `onStreakUpdate` callback so the Navbar streak counter updates immediately after session save. App.tsx also passes `currentStreak` down to Dashboard so the CompactStatsCard always reflects the latest value (handles race condition where user navigates back before save completes)
 - ResultsScreen shows animated XP level bar for signed-in users: bar fills from old progress to new progress with 1-second animation. Server returns `totalXp` in session save response to enable client-side threshold calculation
-- ResultsScreen shows personal best celebration card (yellow border, `animate-bounce-in`) when `isPersonalBest` is true. Server checks via `Session.findFirst` at the effective N-level excluding current session. First session at any N-level is always a personal best. Confetti fires for personal best (150 particles) in addition to level-up (200) and high score (100)
+- ResultsScreen shows personal best celebration card (yellow border, `animate-fade-in-up`) when `isPersonalBest` is true. Server checks via `Session.findFirst` at the effective N-level excluding current session. First session at any N-level is always a personal best. Confetti fires for personal best (60 particles) in addition to level-up (80) and high score (40)
 - ResultsScreen shows a "tomorrow hook" message after save — priority chain: program continuation > streak >=7 > streak 2-6 > streak 1 > achievement proximity (within 3 days of milestone) > personal best callback > generic fallback. `getLocalDate()` is exported from `lib/api.ts` for streak danger comparisons
 - All API calls use `cache: 'no-store'` to prevent browser caching of stale profile/stats data
-- CompactStatsCard combines level/rank, streak, total sessions, XP bar, 12-week activity heatmap, and streak danger indicator into one card. Streak danger shows a countdown banner (green >=8h, yellow 4-8h, red <4h) when `currentStreak > 0` and the user hasn't played today (compares `lastPlayedDate` vs `getLocalDate()`)
+- CompactStatsCard combines level/rank, streak, total sessions, XP bar, 12-week activity heatmap, and streak danger indicator into one card. Streak danger shows a countdown banner with warm tinted backgrounds (`bg-[#f0f7ef]` >=8h, `bg-[#faf6e8]` 4-8h, `bg-[#faf0ee]` <4h) when `currentStreak > 0` and the user hasn't played today (compares `lastPlayedDate` vs `getLocalDate()`)
 - History screen shows chart, avg-by-type, achievements, and session list
 - `server/lib/dates.ts` uses `formatToParts()` with `en-US` locale (not `en-CA`) because `node:20-alpine` ships with `small-icu` which only includes `en-US` — other locales silently fall back to wrong date formats
 - Streak dates use client-provided `localDate` (YYYY-MM-DD) instead of server-side timezone conversion. The client sends `getLocalDate()` in both `saveSession` POST body and `getProfile` query params. Server stores `lastPlayedDate` (String) alongside `lastPlayedAt` (DateTime) for reliable date comparison — avoids Alpine small-icu timezone fallback causing UTC day boundary mismatches

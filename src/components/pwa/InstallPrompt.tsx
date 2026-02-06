@@ -47,11 +47,11 @@ export function InstallPrompt() {
   };
 
   return (
-    <div className="card border-primary-500/30 bg-primary-950/20">
+    <div className="card border-primary-500/30">
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <div className="font-bold text-lg">Install Unreel</div>
-          <div className="text-sm text-gray-400 mt-1">
+          <div className="font-bold text-lg text-text-primary">Install Unreel</div>
+          <div className="text-sm text-text-muted mt-1">
             Add to your home screen for quick access
           </div>
         </div>
@@ -64,7 +64,7 @@ export function InstallPrompt() {
           </button>
           <button
             onClick={handleDismiss}
-            className="text-gray-500 hover:text-gray-300 transition-colors p-1"
+            className="text-text-muted hover:text-text-secondary transition-colors p-1"
             aria-label="Dismiss"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

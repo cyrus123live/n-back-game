@@ -192,10 +192,10 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
 
   if (phase === 'done') {
     return (
-      <div className="max-w-lg mx-auto py-12 px-4 text-center space-y-6">
+      <div className="max-w-lg mx-auto py-12 px-5 text-center space-y-6">
         <div className="text-5xl">🎉</div>
-        <h1 className="text-3xl font-bold">Tutorial Complete!</h1>
-        <p className="text-gray-400">
+        <h1 className="text-3xl font-heading font-bold text-text-primary">Tutorial Complete!</h1>
+        <p className="text-text-muted">
           You know the basics of N-Back training. Head to settings to customize your game and start playing!
         </p>
         <button onClick={handleComplete} className="btn-primary text-lg px-8 py-4">
@@ -211,10 +211,10 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
     <div className="relative">
       <div className="flex flex-col items-center gap-4 py-4">
         <div className="flex items-center justify-between w-full max-w-md px-2">
-          <span className="text-sm text-primary-400 font-medium">Tutorial - 2-Back</span>
+          <span className="text-sm text-primary-500 font-medium">Tutorial - 2-Back</span>
           <button
             onClick={handleSkip}
-            className="text-sm text-gray-500 hover:text-gray-300 px-3 py-1"
+            className="text-sm text-text-muted hover:text-text-secondary px-3 py-1"
           >
             Skip
           </button>
@@ -241,7 +241,7 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
         />
 
         {phase === 'practice' && (
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-text-muted mt-2">
             Press the key when the current stimulus matches 2 back
           </p>
         )}

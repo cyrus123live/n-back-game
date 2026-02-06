@@ -110,7 +110,7 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-surface text-text-primary font-body">
       {view !== 'game' && view !== 'tutorial' && (
         <Navbar
           currentStreak={currentStreak}

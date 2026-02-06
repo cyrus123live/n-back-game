@@ -84,9 +84,9 @@ export function CompactStatsCard({
     const tomorrow = new Date();
     tomorrow.setHours(24, 0, 0, 0);
     const hoursLeft = (tomorrow.getTime() - now) / (1000 * 60 * 60);
-    if (hoursLeft >= 8) return { text: 'text-green-400', bg: 'bg-green-950/30', border: 'border-green-500/40' };
-    if (hoursLeft >= 4) return { text: 'text-yellow-400', bg: 'bg-yellow-950/30', border: 'border-yellow-500/40' };
-    return { text: 'text-red-400', bg: 'bg-red-950/30', border: 'border-red-500/40' };
+    if (hoursLeft >= 8) return { text: 'text-primary-700', bg: 'bg-primary-50', border: 'border-primary-200' };
+    if (hoursLeft >= 4) return { text: 'text-[#c4a035]', bg: 'bg-[#c4a035]/10', border: 'border-[#c4a035]/30' };
+    return { text: 'text-[#b85c4e]', bg: 'bg-[#b85c4e]/10', border: 'border-[#b85c4e]/30' };
   };
 
   return (
@@ -103,11 +103,11 @@ export function CompactStatsCard({
         </div>
         <div className="flex items-center gap-4 text-sm">
           <span className="flex items-center gap-1">
-            <span className="text-orange-400 font-bold">{currentStreak}</span>
+            <span className="text-[#c4a035] font-bold">{currentStreak}</span>
             <span>🔥</span>
           </span>
-          <span className="flex items-center gap-1 text-gray-400">
-            <span className="font-bold text-gray-300">{totalSessions}</span>
+          <span className="flex items-center gap-1 text-text-muted">
+            <span className="font-bold text-text-secondary">{totalSessions}</span>
             sessions
           </span>
         </div>
@@ -121,14 +121,14 @@ export function CompactStatsCard({
             <span className={`text-sm font-medium ${colors.text}`}>
               Streak expires in {streakCountdown}
             </span>
-            <span className="text-xs text-gray-400">Play to keep your {currentStreak}-day streak!</span>
+            <span className="text-xs text-text-muted">Play to keep your {currentStreak}-day streak!</span>
           </div>
         );
       })()}
 
       {/* XP Progress Bar */}
       <div className="mb-3">
-        <div className="h-2.5 bg-gray-800 rounded-full overflow-hidden">
+        <div className="h-2.5 bg-secondary-surface rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{
@@ -137,7 +137,7 @@ export function CompactStatsCard({
             }}
           />
         </div>
-        <div className="flex justify-between text-xs text-gray-500 mt-1">
+        <div className="flex justify-between text-xs text-text-muted mt-1">
           <span>{currentLevelXp} / {nextLevelXp} XP</span>
           <span>{xp.toLocaleString()} total</span>
         </div>
@@ -153,15 +153,15 @@ export function CompactStatsCard({
                 className="w-[14px] h-[14px] rounded-[3px] transition-colors"
                 style={{
                   backgroundColor: day.count === 0
-                    ? '#1f2937'
+                    ? '#e5e2d9'
                     : day.score >= 0.8
-                      ? '#22c55e'
+                      ? '#538d4e'
                       : day.score >= 0.6
-                        ? '#84cc16'
+                        ? '#6aae62'
                         : day.score >= 0.4
-                          ? '#eab308'
-                          : '#f97316',
-                  opacity: day.count === 0 ? 0.3 : 0.4 + Math.min(day.count, 5) * 0.12,
+                          ? '#c4a035'
+                          : '#d4885a',
+                  opacity: day.count === 0 ? 0.4 : 0.5 + Math.min(day.count, 5) * 0.1,
                 }}
                 title={`${day.date}: ${day.count} sessions${day.count > 0 ? ` (${Math.round(day.score * 100)}% avg)` : ''}`}
               />
@@ -169,7 +169,7 @@ export function CompactStatsCard({
           </div>
         ))}
       </div>
-      <div className="text-xs text-gray-600 mt-1">
+      <div className="text-xs text-text-muted mt-1">
         Longest streak: {longestStreak} days
       </div>
     </div>

@@ -33,18 +33,18 @@ export function ProgramCard({ program, onContinue }: ProgramCardProps) {
     <div className="card border-primary-500/30 space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-xs text-primary-400 font-semibold uppercase tracking-wider">
+          <div className="text-xs text-primary-500 font-semibold uppercase tracking-wider">
             Active Program
           </div>
-          <div className="font-bold text-lg">{template.name}</div>
+          <div className="font-bold text-lg text-text-primary">{template.name}</div>
         </div>
-        <div className="text-sm text-gray-400">
+        <div className="text-sm text-text-muted">
           Day {program.currentDay} / {template.totalDays}
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+      <div className="h-2 bg-secondary-surface rounded-full overflow-hidden">
         <div
           className="h-full bg-primary-500 rounded-full transition-all duration-300"
           style={{ width: `${progress}%` }}
@@ -52,13 +52,13 @@ export function ProgramCard({ program, onContinue }: ProgramCardProps) {
       </div>
 
       {/* Today's session */}
-      <div className="bg-gray-900/50 rounded-xl p-3 space-y-1">
-        <div className="text-sm font-medium text-gray-300">
-          {todaySession.nLevel}-Back • {todaySession.activeStimuli.map((s) => STIMULUS_LABELS[s]).join(' + ')}
-          {todaySession.adaptive && <span className="text-purple-400 ml-1">(Adaptive)</span>}
+      <div className="bg-secondary-surface rounded-xl p-3 space-y-1">
+        <div className="text-sm font-medium text-text-secondary">
+          {todaySession.nLevel}-Back · {todaySession.activeStimuli.map((s) => STIMULUS_LABELS[s]).join(' + ')}
+          {todaySession.adaptive && <span className="text-[#8b6eae] ml-1">(Adaptive)</span>}
         </div>
-        <div className="text-xs text-gray-500">{todaySession.description}</div>
-        <div className="text-xs text-gray-500 mt-1">
+        <div className="text-xs text-text-muted">{todaySession.description}</div>
+        <div className="text-xs text-text-muted mt-1">
           Score {Math.round(getRequiredScore(todaySession) * 100)}% to advance · {Math.round(SKIP_THRESHOLD * 100)}% to skip ahead
         </div>
       </div>

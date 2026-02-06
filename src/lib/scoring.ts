@@ -100,12 +100,9 @@ export function getComboColor(combo: number): string {
   if (combo >= 15) return 'combo-gold';
   if (combo >= 10) return 'combo-purple';
   if (combo >= 5) return 'combo-blue';
-  return 'text-white';
+  return 'text-text-secondary';
 }
 
-export function getComboGlow(combo: number): string {
-  if (combo >= 15) return 'edge-glow-gold';
-  if (combo >= 10) return 'edge-glow-purple';
-  if (combo >= 5) return 'edge-glow-blue';
+export function getComboGlow(_combo: number): string {
   return '';
 }

@@ -25,6 +25,12 @@ const INTERVAL_OPTIONS = [
   { value: 3000, label: '3.0s' },
 ];
 
+function getGreeting(): { greeting: string; subtitle: string } {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  return { greeting, subtitle: 'Welcome back' };
+}
+
 export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, onProgramPlay, currentStreak: streakFromApp }: DashboardProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<StatsData | null>(null);
@@ -85,10 +91,10 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
 
   if (loading) {
     return (
-      <div className="max-w-lg mx-auto space-y-4 py-6 px-4">
+      <div className="max-w-lg mx-auto space-y-6 py-10 px-5">
         {[1, 2, 3].map((i) => (
           <div key={i} className="card animate-pulse">
-            <div className="h-24 bg-gray-700 rounded" />
+            <div className="h-24 bg-secondary-surface rounded" />
           </div>
         ))}
       </div>
@@ -100,16 +106,16 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
   // Unauthenticated / no profile: show inline settings + play
   if (!profile) {
     return (
-      <div className="max-w-lg mx-auto py-8 px-4 space-y-6">
+      <div className="max-w-lg mx-auto py-10 px-5 space-y-6">
         <div className="text-center">
-          <h1 className="text-4xl font-black mb-2">Unreel</h1>
-          <p className="text-gray-400">Train your working memory with the N-Back task</p>
+          <h1 className="text-4xl font-heading font-extrabold text-text-primary mb-2">Unreel</h1>
+          <p className="text-text-muted">Train your working memory with the N-Back task</p>
         </div>
 
         <InstallPrompt />
 
         {queuedCount > 0 && (
-          <div className="card border-yellow-500/30 bg-yellow-950/20 text-sm text-yellow-300">
+          <div className="card border-[#c4a035]/30 text-sm text-[#c4a035]">
             {queuedCount} session{queuedCount !== 1 ? 's' : ''} waiting to sync — will sync when online
           </div>
         )}
@@ -121,30 +127,39 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
           How to Play
         </button>
 
-        <p className="text-sm text-gray-500 text-center">Sign in to track progress, earn XP, and unlock achievements</p>
+        <p className="text-sm text-text-muted text-center">Sign in to track progress, earn XP, and unlock achievements</p>
       </div>
     );
   }
 
   const showTutorialPrompt = stats?.totalSessions === 0 && !localStorage.getItem('unreel-tutorial-seen');
+  const { greeting, subtitle } = getGreeting();
 
   return (
-    <div className="max-w-lg mx-auto space-y-4 py-6 px-4">
+    <div className="max-w-lg mx-auto space-y-6 py-10 px-5">
+      {/* Time-of-day greeting */}
+      <div>
+        <h1 className="text-2xl font-heading font-bold text-text-primary">{greeting}</h1>
+        <p className="text-text-muted text-sm mt-0.5">
+          {stats?.totalSessions === 0 ? 'Ready to train?' : subtitle}
+        </p>
+      </div>
+
       {/* Tutorial Prompt for new users */}
       {showTutorialPrompt && (
         <button
           onClick={onTutorial}
-          className="w-full card border-primary-500/50 bg-primary-950/30 hover:bg-primary-900/30 transition-colors text-left"
+          className="w-full card border-primary-500/30 hover:border-primary-500/50 transition-colors text-left"
         >
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-xs text-primary-400 font-semibold uppercase tracking-wider mb-1">
+              <div className="text-xs text-primary-500 font-semibold uppercase tracking-wider mb-1">
                 New here?
               </div>
-              <div className="font-bold text-lg">Learn How to Play</div>
-              <div className="text-sm text-gray-400 mt-1">A guided walkthrough of the N-Back task</div>
+              <div className="font-bold text-lg text-text-primary">Learn How to Play</div>
+              <div className="text-sm text-text-muted mt-1">A guided walkthrough of the N-Back task</div>
             </div>
-            <svg className="w-8 h-8 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-8 h-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
           </div>
@@ -159,7 +174,7 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
       <InstallPrompt />
 
       {queuedCount > 0 && (
-        <div className="card border-yellow-500/30 bg-yellow-950/20 text-sm text-yellow-300">
+        <div className="card border-[#c4a035]/30 text-sm text-[#c4a035]">
           {queuedCount} session{queuedCount !== 1 ? 's' : ''} waiting to sync — will sync when online
         </div>
       )}
@@ -211,7 +226,7 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
       <>
         {/* N-Level Picker */}
         <div className="card">
-          <label className="block text-sm text-gray-400 mb-3 font-medium">
+          <label className="block text-sm text-text-muted mb-3 font-medium">
             {adaptive ? 'Starting Level' : 'N-Back Level'}
           </label>
           <div className="flex gap-2 flex-wrap">
@@ -222,8 +237,8 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
                 className={`
                   w-11 h-11 rounded-xl font-bold text-lg transition-all
                   ${n === nLevel
-                    ? 'bg-primary-600 text-white ring-2 ring-primary-400'
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    ? 'bg-primary-500 text-white ring-2 ring-primary-300'
+                    : 'bg-secondary-surface text-text-secondary hover:bg-card-border'
                   }
                 `}
               >
@@ -235,7 +250,7 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
 
         {/* Stimuli Toggles */}
         <div className="card">
-          <label className="block text-sm text-gray-400 mb-3 font-medium">
+          <label className="block text-sm text-text-muted mb-3 font-medium">
             Stimuli ({activeStimuli.length} active)
           </label>
           <div className="flex flex-wrap gap-2">
@@ -249,13 +264,13 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
                     flex items-center gap-2 px-3 py-2 rounded-xl transition-all text-sm font-medium
                     border-2
                     ${active
-                      ? 'border-opacity-60 bg-opacity-10'
-                      : 'border-gray-700 bg-gray-800/50 hover:bg-gray-700/50'
+                      ? ''
+                      : 'border-card-border bg-secondary-surface hover:bg-card-border/50'
                     }
                   `}
                   style={
                     active
-                      ? { borderColor: STIMULUS_COLORS[type], backgroundColor: `${STIMULUS_COLORS[type]}15` }
+                      ? { borderColor: STIMULUS_COLORS[type], backgroundColor: `${STIMULUS_COLORS[type]}12` }
                       : {}
                   }
                 >
@@ -263,7 +278,7 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
                     className={`w-2.5 h-2.5 rounded-full transition-all ${active ? '' : 'opacity-30'}`}
                     style={{ backgroundColor: STIMULUS_COLORS[type] }}
                   />
-                  <span className={active ? 'text-white' : 'text-gray-400'}>
+                  <span className={active ? 'text-text-primary' : 'text-text-muted'}>
                     {STIMULUS_LABELS[type]}
                   </span>
                   <span className="key-hint text-xs">{STIMULUS_KEY_MAP[type]}</span>
@@ -276,7 +291,7 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
         {/* Advanced Section (collapsible) */}
         <button
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-300 transition-colors w-full"
+          className="flex items-center gap-2 text-sm text-text-muted hover:text-text-secondary transition-colors w-full"
         >
           <svg
             className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-90' : ''}`}
@@ -293,7 +308,7 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
           <div className="card space-y-4">
             {/* Trial Count */}
             <div>
-              <label className="block text-sm text-gray-400 mb-2 font-medium">Trials</label>
+              <label className="block text-sm text-text-muted mb-2 font-medium">Trials</label>
               <div className="flex gap-2">
                 {TRIAL_OPTIONS.map((count) => (
                   <button
@@ -302,8 +317,8 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
                     className={`
                       flex-1 py-2.5 rounded-xl font-medium transition-all text-sm
                       ${count === trialCount
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        ? 'bg-primary-500 text-white'
+                        : 'bg-secondary-surface text-text-secondary hover:bg-card-border'
                       }
                     `}
                   >
@@ -315,7 +330,7 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
 
             {/* Interval */}
             <div>
-              <label className="block text-sm text-gray-400 mb-2 font-medium">Interval</label>
+              <label className="block text-sm text-text-muted mb-2 font-medium">Interval</label>
               <div className="flex gap-2">
                 {INTERVAL_OPTIONS.map((opt) => (
                   <button
@@ -324,8 +339,8 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
                     className={`
                       flex-1 py-2.5 rounded-xl font-medium transition-all text-sm
                       ${opt.value === intervalMs
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        ? 'bg-primary-500 text-white'
+                        : 'bg-secondary-surface text-text-secondary hover:bg-card-border'
                       }
                     `}
                   >
@@ -338,19 +353,19 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
             {/* Adaptive Toggle */}
             <div className="flex items-center justify-between">
               <div>
-                <label className="block text-sm text-gray-300 font-medium">Adaptive Difficulty</label>
-                <p className="text-xs text-gray-500 mt-0.5">N-level adjusts based on performance</p>
+                <label className="block text-sm text-text-secondary font-medium">Adaptive Difficulty</label>
+                <p className="text-xs text-text-muted mt-0.5">N-level adjusts based on performance</p>
               </div>
               <button
                 onClick={() => setAdaptive(!adaptive)}
                 className={`
                   relative w-12 h-7 rounded-full transition-colors duration-200
-                  ${adaptive ? 'bg-primary-600' : 'bg-gray-600'}
+                  ${adaptive ? 'bg-primary-500' : 'bg-card-border'}
                 `}
               >
                 <div
                   className={`
-                    absolute top-0.5 w-6 h-6 rounded-full bg-white transition-transform duration-200
+                    absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-sm transition-transform duration-200
                     ${adaptive ? 'translate-x-5' : 'translate-x-0.5'}
                   `}
                 />

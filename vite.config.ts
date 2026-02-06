@@ -11,8 +11,8 @@ export default defineConfig({
         name: 'Unreel - N-Back Training',
         short_name: 'Unreel',
         description: 'Train your working memory with the N-Back task',
-        theme_color: '#1e1b4b',
-        background_color: '#030712',
+        theme_color: '#fafaf8',
+        background_color: '#fafaf8',
         display: 'standalone',
         orientation: 'portrait',
         icons: [

@@ -131,7 +131,7 @@ export function ResultsScreen({
         // Fire confetti for level up, personal best, or high score
         if ((response.leveledUp || response.isPersonalBest || overallScore >= 0.9) && !confettiFired.current) {
           confettiFired.current = true;
-          const particleCount = response.leveledUp ? 200 : response.isPersonalBest ? 150 : 100;
+          const particleCount = response.leveledUp ? 80 : response.isPersonalBest ? 60 : 40;
           confetti({
             particleCount,
             spread: 70,
@@ -208,21 +208,21 @@ export function ResultsScreen({
   const scorePercent = Math.round(overallScore * 100);
 
   return (
-    <div className="max-w-lg mx-auto space-y-6 py-6 px-4">
+    <div className="max-w-lg mx-auto space-y-6 py-10 px-5">
       <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold">Round Complete</h1>
+        <h1 className="text-3xl font-heading font-bold text-text-primary">Round Complete</h1>
         <div
           className={`text-6xl font-black ${
-            scorePercent >= 90 ? 'text-green-400' :
-            scorePercent >= 70 ? 'text-yellow-400' :
-            scorePercent >= 50 ? 'text-orange-400' :
-            'text-red-400'
+            scorePercent >= 90 ? 'text-primary-500' :
+            scorePercent >= 70 ? 'text-[#c4a035]' :
+            scorePercent >= 50 ? 'text-[#c4a035]/70' :
+            'text-text-muted'
           }`}
         >
           {scorePercent}%
         </div>
-        <p className="text-gray-400">
-          {adaptive ? `Adaptive ${startingLevel}-Back` : `${settings.nLevel}-Back`} • {settings.trialCount} trials
+        <p className="text-text-muted">
+          {adaptive ? `Adaptive ${startingLevel}-Back` : `${settings.nLevel}-Back`} · {settings.trialCount} trials
         </p>
       </div>
 
@@ -238,16 +238,16 @@ export function ResultsScreen({
 
       {/* Level Up */}
       {leveledUp && (
-        <div className="card border-yellow-500/50 bg-yellow-950/20 text-center animate-bounce-in">
-          <div className="text-2xl font-bold text-yellow-400">Level Up!</div>
+        <div className="card border-[#c4a035]/30 text-center animate-fade-in-up">
+          <div className="text-2xl font-bold text-[#c4a035]">Level Up!</div>
         </div>
       )}
 
       {/* Personal Best */}
       {isPersonalBest && saveState === 'saved' && (
-        <div className="card border-yellow-500/50 bg-yellow-950/20 text-center animate-bounce-in">
-          <div className="text-2xl font-bold text-yellow-400">New Personal Best!</div>
-          <div className="text-sm text-gray-300 mt-1">
+        <div className="card border-[#c4a035]/30 text-center animate-fade-in-up">
+          <div className="text-2xl font-bold text-[#c4a035]">New Personal Best!</div>
+          <div className="text-sm text-text-muted mt-1">
             {scorePercent}% at {adaptive ? `${endingLevel}` : `${settings.nLevel}`}-Back
           </div>
         </div>
@@ -259,12 +259,12 @@ export function ResultsScreen({
           {newAchievements.map((a) => (
             <div
               key={a.id}
-              className="card border-primary-500/50 bg-primary-950/20 flex items-center gap-3 animate-slide-up"
+              className="card border-primary-500/30 flex items-center gap-3 animate-fade-in-up"
             >
               <span className="text-3xl">{a.icon}</span>
               <div>
-                <div className="font-bold text-primary-300">{a.name}</div>
-                <div className="text-sm text-gray-400">{a.description}</div>
+                <div className="font-bold text-primary-500">{a.name}</div>
+                <div className="text-sm text-text-muted">{a.description}</div>
               </div>
             </div>
           ))}
@@ -275,21 +275,21 @@ export function ResultsScreen({
       {adaptive && startingLevel != null && endingLevel != null && (
         <div className="card space-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded">Adaptive Mode</span>
+            <span className="text-xs bg-[#8b6eae]/15 text-[#8b6eae] px-2 py-0.5 rounded">Adaptive Mode</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-400 text-sm">This Session</span>
-            <span className="font-bold">{startingLevel}-Back</span>
+            <span className="text-text-muted text-sm">This Session</span>
+            <span className="font-bold text-text-primary">{startingLevel}-Back</span>
           </div>
           {endingLevel !== startingLevel ? (
             <div className="flex items-center justify-between">
-              <span className="text-gray-400 text-sm">Next Session</span>
-              <span className={`font-bold ${endingLevel > startingLevel ? 'text-green-400' : 'text-orange-400'}`}>
+              <span className="text-text-muted text-sm">Next Session</span>
+              <span className={`font-bold ${endingLevel > startingLevel ? 'text-primary-500' : 'text-[#c4a035]'}`}>
                 {endingLevel}-Back {endingLevel > startingLevel ? '(level up)' : '(level down)'}
               </span>
             </div>
           ) : (
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-text-muted">
               Level stays at {startingLevel}-Back for next session
             </div>
           )}
@@ -298,7 +298,7 @@ export function ResultsScreen({
 
       {/* Per-type accuracy */}
       <div className="card space-y-3">
-        <h2 className="text-sm text-gray-400 font-medium uppercase tracking-wider">Accuracy by Type</h2>
+        <h2 className="text-sm text-text-muted font-medium uppercase tracking-wider">Accuracy by Type</h2>
         {settings.activeStimuli.map((type) => {
           const result = results[type];
           if (!result) return null;
@@ -306,12 +306,12 @@ export function ResultsScreen({
           return (
             <div key={type} className="space-y-1">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-300">{STIMULUS_LABELS[type]}</span>
+                <span className="text-text-secondary">{STIMULUS_LABELS[type]}</span>
                 <span className="font-medium" style={{ color: STIMULUS_COLORS[type] }}>
                   {accuracy}%
                 </span>
               </div>
-              <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+              <div className="h-2 bg-secondary-surface rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-1000"
                   style={{
@@ -320,7 +320,7 @@ export function ResultsScreen({
                   }}
                 />
               </div>
-              <div className="flex gap-4 text-xs text-gray-500">
+              <div className="flex gap-4 text-xs text-text-muted">
                 <span>Hits: {result.hits}</span>
                 <span>Misses: {result.misses}</span>
                 <span>False alarms: {result.falseAlarms}</span>
@@ -333,8 +333,8 @@ export function ResultsScreen({
       {/* Combo Stats */}
       <div className="card flex items-center justify-between">
         <div>
-          <div className="text-sm text-gray-400">Max Combo</div>
-          <div className="text-2xl font-bold">{maxCombo}</div>
+          <div className="text-sm text-text-muted">Max Combo</div>
+          <div className="text-2xl font-bold text-text-primary">{maxCombo}</div>
         </div>
         {maxCombo >= 10 && (
           <div className="text-3xl">
@@ -350,24 +350,24 @@ export function ResultsScreen({
 
         if (programResult.completed) {
           return (
-            <div className="card border-green-500/30 bg-green-950/20 space-y-2 animate-slide-up">
-              <div className="font-bold text-green-400 text-lg">Program Complete!</div>
-              <div className="text-sm text-gray-300">{templateName} finished!</div>
-              <div className="text-xs text-gray-500">You've completed all sessions</div>
+            <div className="card border-primary-500/30 space-y-2 animate-fade-in-up">
+              <div className="font-bold text-primary-500 text-lg">Program Complete!</div>
+              <div className="text-sm text-text-secondary">{templateName} finished!</div>
+              <div className="text-xs text-text-muted">You've completed all sessions</div>
             </div>
           );
         }
 
         if (!programResult.passed) {
           return (
-            <div className="card border-orange-500/30 bg-orange-950/20 space-y-2">
-              <div className="font-bold text-orange-400">
+            <div className="card border-[#c4a035]/30 space-y-2">
+              <div className="font-bold text-[#c4a035]">
                 Day {programResult.program.currentDay} — Not quite!
               </div>
-              <div className="text-sm text-gray-300">
+              <div className="text-sm text-text-secondary">
                 Score: {scorePercent}% — {Math.round(programResult.requiredScore * 100)}% required to advance
               </div>
-              <div className="text-xs text-gray-500">Keep practicing to move forward</div>
+              <div className="text-xs text-text-muted">Keep practicing to move forward</div>
             </div>
           );
         }
@@ -375,24 +375,24 @@ export function ResultsScreen({
         if (programResult.skippedTo) {
           const skipSession = template?.sessions[(programResult.skippedTo) - 1];
           return (
-            <div className="card border-purple-500/30 bg-purple-950/20 space-y-2 animate-slide-up">
-              <div className="font-bold text-purple-400">Skipping Ahead!</div>
-              <div className="text-sm text-gray-300">
+            <div className="card border-[#8b6eae]/30 space-y-2 animate-fade-in-up">
+              <div className="font-bold text-[#8b6eae]">Skipping Ahead!</div>
+              <div className="text-sm text-text-secondary">
                 Score: {scorePercent}% — jumping to Day {programResult.skippedTo}
               </div>
               {skipSession && (
-                <div className="text-xs text-gray-500">{skipSession.description}</div>
+                <div className="text-xs text-text-muted">{skipSession.description}</div>
               )}
             </div>
           );
         }
 
         return (
-          <div className="card border-green-500/30 bg-green-950/20 space-y-2 animate-slide-up">
-            <div className="font-bold text-green-400">
+          <div className="card border-primary-500/30 space-y-2 animate-fade-in-up">
+            <div className="font-bold text-primary-500">
               Day {programResult.program.currentDay - 1} Complete!
             </div>
-            <div className="text-sm text-gray-300">
+            <div className="text-sm text-text-secondary">
               Advancing to Day {programResult.program.currentDay}
             </div>
           </div>
@@ -400,7 +400,7 @@ export function ResultsScreen({
       })()}
 
       {/* Save status */}
-      <div className="text-center text-xs text-gray-500">
+      <div className="text-center text-xs text-text-muted">
         {saveState === 'saving' && 'Saving...'}
         {saveState === 'saved' && 'Session saved'}
         {saveState === 'queued' && 'Session saved offline — will sync when you reconnect'}
@@ -412,8 +412,8 @@ export function ResultsScreen({
         const hook = getTomorrowHook();
         if (!hook) return null;
         return (
-          <div className="text-center text-sm text-gray-400 animate-slide-up">
-            <span className="text-gray-500">→</span> {hook}
+          <div className="text-center text-sm text-text-muted animate-fade-in-up">
+            {hook}
           </div>
         );
       })()}
@@ -475,11 +475,11 @@ function XPLevelBar({ data }: { data: { oldProgress: number; newProgress: number
         <span className="text-sm font-bold" style={{ color: rank.color }}>
           Lv {data.level} {rank.name}
         </span>
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-text-muted">
           {data.totalXp.toLocaleString()} total XP
         </span>
       </div>
-      <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
+      <div className="h-3 bg-secondary-surface rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-1000 ease-out"
           style={{
@@ -488,7 +488,7 @@ function XPLevelBar({ data }: { data: { oldProgress: number; newProgress: number
           }}
         />
       </div>
-      <div className="text-xs text-gray-500 mt-1">
+      <div className="text-xs text-text-muted mt-1">
         {data.currentLevelXp} / {data.nextLevelXp} XP to next level
       </div>
     </div>

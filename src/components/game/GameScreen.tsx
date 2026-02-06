@@ -1,9 +1,8 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { StimulusType, GameSettings, SessionResults } from '../../types';
 import { useGameLoop } from '../../hooks/useGameLoop';
 import { useKeyboard } from '../../hooks/useKeyboard';
 import { useAudio } from '../../hooks/useAudio';
-import { getComboGlow } from '../../lib/scoring';
 import { GameGrid } from './GameGrid';
 import { MatchButtons } from './MatchButtons';
 import { ComboCounter } from './ComboCounter';
@@ -42,7 +41,7 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
       }
 
       if (hasWrong) {
-        setFlashClass('flash-red');
+        setFlashClass('flash-miss');
         playIncorrect();
       } else if (hasMiss) {
         setFlashClass('flash-orange');
@@ -119,16 +118,14 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
 
   useKeyboard(settings.activeStimuli, handleMatch, gameState.phase === 'playing');
 
-  const glowClass = useMemo(() => getComboGlow(gameState.combo), [gameState.combo]);
-
   if (gameState.phase === 'countdown') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8">
-        <div className="text-8xl font-black text-primary-400 animate-bounce-in" key={countdown}>
+        <div className="text-8xl font-black text-primary-500 animate-bounce-in" key={countdown}>
           {countdown}
         </div>
-        <p className="text-gray-400">Get ready...</p>
-        <button onClick={onCancel} className="text-sm text-gray-500 hover:text-gray-300">
+        <p className="text-text-muted">Get ready...</p>
+        <button onClick={onCancel} className="text-sm text-text-muted hover:text-text-secondary">
           Cancel
         </button>
       </div>
@@ -136,12 +133,12 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
   }
 
   return (
-    <div className={`flex flex-col items-center gap-4 py-4 transition-all duration-500 ${glowClass}`}>
+    <div className="flex flex-col items-center gap-4 py-4">
       <div className="flex items-center justify-between w-full max-w-md px-2">
         <ComboCounter combo={gameState.combo} maxCombo={gameState.maxCombo} />
         <button
           onClick={onCancel}
-          className="text-sm text-gray-500 hover:text-gray-300 px-3 py-1"
+          className="text-sm text-text-muted hover:text-text-secondary px-3 py-1"
         >
           Quit
         </button>
@@ -166,7 +163,7 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
         disabled={gameState.phase !== 'playing'}
       />
 
-      <p className="text-xs text-gray-500 mt-2">
+      <p className="text-xs text-text-muted mt-2">
         Press the key when the current stimulus matches {settings.nLevel} back
       </p>
     </div>

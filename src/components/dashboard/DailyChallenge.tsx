@@ -32,7 +32,7 @@ export function DailyChallenge({ challenge, onPlay }: DailyChallengeProps) {
   if (!challenge) {
     return (
       <div className="card animate-pulse">
-        <div className="h-20 bg-gray-700 rounded" />
+        <div className="h-20 bg-secondary-surface rounded" />
       </div>
     );
   }
@@ -44,18 +44,18 @@ export function DailyChallenge({ challenge, onPlay }: DailyChallengeProps) {
     >
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-xs text-primary-400 font-semibold uppercase tracking-wider mb-1">
+          <div className="text-xs text-primary-500 font-semibold uppercase tracking-wider mb-1">
             Daily Challenge
           </div>
-          <div className="font-bold text-lg group-hover:text-primary-300 transition-colors">
+          <div className="font-bold text-lg text-text-primary group-hover:text-primary-500 transition-colors">
             {challenge.nLevel}-Back
           </div>
-          <div className="text-sm text-gray-400 mt-0.5">
+          <div className="text-sm text-text-muted mt-0.5">
             {challenge.activeStimuli.map((s) => STIMULUS_LABELS[s]).join(' + ')}
           </div>
           <div className="flex items-center gap-3 mt-2">
-            <span className="text-xs text-yellow-400 font-medium">2× XP</span>
-            <span className="text-xs text-gray-500">Resets in {timeLeft}</span>
+            <span className="text-xs text-[#c4a035] font-medium">2x XP</span>
+            <span className="text-xs text-text-muted">Resets in {timeLeft}</span>
           </div>
         </div>
         <div className="text-4xl group-hover:scale-110 transition-transform">🎯</div>

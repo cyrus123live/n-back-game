@@ -34,7 +34,7 @@ export function MatchButtons({ activeStimuli, onMatch, pressedThisTrial, disable
         ))}
       </div>
       {leftActive.length > 0 && rightActive.length > 0 && (
-        <div className="w-px h-12 bg-gray-700" />
+        <div className="w-px h-12 bg-card-border" />
       )}
       <div className="flex gap-2">
         {rightActive.map((type) => (
@@ -70,13 +70,13 @@ function MatchButton({
   const color = STIMULUS_COLORS[type];
 
   const feedbackStyle = feedback === 'wrong'
-    ? { borderColor: '#ef4444', backgroundColor: '#ef444430' }
+    ? { borderColor: '#787774', backgroundColor: '#78777420' }
     : feedback === 'missed'
-    ? { borderColor: '#eab308', backgroundColor: '#eab30830' }
+    ? { borderColor: '#c4a035', backgroundColor: '#c4a03520' }
     : feedback === 'correct'
-    ? { borderColor: '#22c55e', backgroundColor: '#22c55e30' }
+    ? { borderColor: '#538d4e', backgroundColor: '#538d4e20' }
     : pressed
-    ? { borderColor: color, backgroundColor: `${color}20` }
+    ? { borderColor: color, backgroundColor: `${color}15` }
     : undefined;
 
   return (
@@ -85,19 +85,19 @@ function MatchButton({
       disabled={disabled}
       className={`
         relative flex flex-col items-center gap-1 px-4 py-3 rounded-xl
-        font-semibold text-sm transition-all duration-150 active:scale-95
+        font-semibold text-sm transition-all duration-150 active:scale-[0.98]
         border-2 min-w-[80px]
         ${feedback
           ? ''
           : pressed
-          ? 'border-white/40 bg-white/10 scale-95'
-          : 'border-gray-600 bg-gray-800 hover:bg-gray-700 hover:border-gray-500'
+          ? 'scale-[0.98]'
+          : 'border-card-border bg-white hover:bg-secondary-surface hover:border-text-muted/30'
         }
         disabled:opacity-50 disabled:cursor-not-allowed
       `}
       style={feedbackStyle}
     >
-      <span className="text-xs text-gray-400 uppercase tracking-wider">{label}</span>
+      <span className="text-xs text-text-muted uppercase tracking-wider">{label}</span>
       <span className="key-hint" style={pressed ? { backgroundColor: color, color: 'white' } : {}}>
         {key}
       </span>

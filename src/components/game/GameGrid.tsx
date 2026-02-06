@@ -18,7 +18,7 @@ export function GameGrid({ stimulus, activeStimuli, flashClass }: GameGridProps)
       {showShape && (
         <ShapeRenderer
           shape={stimulus.shape}
-          color={showColor ? stimulus.color : '#6366f1'}
+          color={showColor ? stimulus.color : '#538d4e'}
           size={48}
         />
       )}
@@ -29,7 +29,7 @@ export function GameGrid({ stimulus, activeStimuli, flashClass }: GameGridProps)
         />
       )}
       {showNumber && (
-        <span className="text-2xl font-bold text-white drop-shadow-lg">
+        <span className="text-2xl font-bold text-text-primary drop-shadow-sm">
           {stimulus.number}
         </span>
       )}
@@ -42,10 +42,10 @@ export function GameGrid({ stimulus, activeStimuli, flashClass }: GameGridProps)
   // Single-square mode when position is not active
   if (!showPosition) {
     return (
-      <div className={`relative rounded-2xl border-2 border-gray-700 bg-gray-900/50 p-3 ${flashClass}`}>
+      <div className={`relative rounded-2xl border-2 border-card-border bg-secondary-surface p-3 ${flashClass}`}>
         <div className="flex items-center justify-center w-[240px] h-[240px] sm:w-[300px] sm:h-[300px]">
           {stimulus && (
-            <div className="w-24 h-24 rounded-xl bg-gray-700/80 border border-gray-500 flex items-center justify-center animate-scale-up">
+            <div className="w-24 h-24 rounded-xl bg-white border border-card-border flex items-center justify-center animate-scale-up">
               {cellContent}
             </div>
           )}
@@ -56,17 +56,17 @@ export function GameGrid({ stimulus, activeStimuli, flashClass }: GameGridProps)
 
   // Standard 3x3 grid mode
   return (
-    <div className={`relative rounded-2xl border-2 border-gray-700 bg-gray-900/50 p-3 ${flashClass}`}>
+    <div className={`relative rounded-2xl border-2 border-card-border bg-secondary-surface p-3 ${flashClass}`}>
       <div className="grid grid-cols-3 gap-2 w-[240px] h-[240px] sm:w-[300px] sm:h-[300px]">
         {Array.from({ length: 9 }, (_, i) => (
           <div
             key={i}
             className={`
-              rounded-lg border border-gray-700/50 flex items-center justify-center
+              rounded-lg border flex items-center justify-center
               transition-all duration-150
               ${stimulus && stimulus.position === i
-                ? 'bg-gray-700/80 border-gray-500'
-                : 'bg-gray-800/30'
+                ? 'bg-white border-card-border shadow-sm'
+                : 'bg-white/50 border-card-border/50'
               }
             `}
           >

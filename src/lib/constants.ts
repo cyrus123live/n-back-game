@@ -3,14 +3,14 @@ import type { AchievementDef } from '../types';
 export const GRID_POSITIONS = 9; // 3x3
 
 export const COLORS = [
-  '#ef4444', // red
-  '#3b82f6', // blue
-  '#22c55e', // green
-  '#eab308', // yellow
-  '#a855f7', // purple
-  '#f97316', // orange
-  '#06b6d4', // cyan
-  '#ec4899', // pink
+  '#c45c4e', // red
+  '#577fb5', // blue
+  '#538d4e', // green
+  '#c4a035', // yellow
+  '#8b6eae', // purple
+  '#c47a3e', // orange
+  '#4a9ea8', // cyan
+  '#b5648a', // pink
 ];
 
 export const SHAPES = [
@@ -29,12 +29,12 @@ export const LETTERS = ['B', 'C', 'D', 'F', 'G', 'H', 'K', 'L', 'M', 'N', 'P', '
 export const NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export const RANK_TIERS = [
-  { name: 'Novice', minLevel: 1, color: '#9ca3af' },
-  { name: 'Apprentice', minLevel: 5, color: '#22c55e' },
-  { name: 'Adept', minLevel: 10, color: '#3b82f6' },
-  { name: 'Expert', minLevel: 15, color: '#a855f7' },
-  { name: 'Master', minLevel: 20, color: '#eab308' },
-  { name: 'Grandmaster', minLevel: 25, color: '#ef4444' },
+  { name: 'Novice', minLevel: 1, color: '#787774' },
+  { name: 'Apprentice', minLevel: 5, color: '#538d4e' },
+  { name: 'Adept', minLevel: 10, color: '#577fb5' },
+  { name: 'Expert', minLevel: 15, color: '#8b6eae' },
+  { name: 'Master', minLevel: 20, color: '#c4a035' },
+  { name: 'Grandmaster', minLevel: 25, color: '#b85c4e' },
 ];
 
 export function getRank(level: number) {
@@ -64,11 +64,11 @@ export const STIMULUS_LABELS: Record<string, string> = {
 };
 
 export const STIMULUS_COLORS: Record<string, string> = {
-  position: '#3b82f6',
-  color: '#22c55e',
-  shape: '#a855f7',
-  number: '#eab308',
-  audio: '#ef4444',
+  position: '#577fb5',
+  color: '#538d4e',
+  shape: '#8b6eae',
+  number: '#c4a035',
+  audio: '#b85c4e',
 };
 
 export const ACHIEVEMENTS: AchievementDef[] = [

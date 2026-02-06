@@ -8,12 +8,12 @@ interface NavbarProps {
 
 export function Navbar({ currentStreak, onNavigate, currentView }: NavbarProps) {
   return (
-    <nav className="sticky top-0 z-50 bg-gray-950/90 backdrop-blur border-b border-gray-800">
+    <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-card-border">
       <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
             onClick={() => onNavigate('dashboard')}
-            className="font-bold text-lg hover:text-primary-400 transition-colors"
+            className="font-heading font-bold text-lg text-text-primary hover:text-primary-500 transition-colors"
           >
             Unreel
           </button>
@@ -36,7 +36,7 @@ export function Navbar({ currentStreak, onNavigate, currentView }: NavbarProps) 
         <div className="flex items-center gap-4">
           {currentStreak !== undefined && currentStreak > 0 && (
             <div className="flex items-center gap-1 text-sm">
-              <span className="text-orange-400 font-bold">{currentStreak}</span>
+              <span className="text-[#c4a035] font-bold">{currentStreak}</span>
               <span>🔥</span>
             </div>
           )}
@@ -46,7 +46,7 @@ export function Navbar({ currentStreak, onNavigate, currentView }: NavbarProps) 
           </SignedIn>
           <SignedOut>
             <SignInButton mode="modal">
-              <button className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-800">
+              <button className="text-sm text-text-muted hover:text-text-primary transition-colors px-3 py-1.5 rounded-lg hover:bg-secondary-surface">
                 Sign In
               </button>
             </SignInButton>
@@ -63,7 +63,7 @@ function NavLink({ label, active, onClick }: { label: string; active: boolean; o
       onClick={onClick}
       className={`
         px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
-        ${active ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'}
+        ${active ? 'bg-secondary-surface text-text-primary' : 'text-text-muted hover:text-text-primary hover:bg-secondary-surface'}
       `}
     >
       {label}

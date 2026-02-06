@@ -12,8 +12,8 @@ export function AchievementGrid({ userAchievements }: AchievementGridProps) {
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm text-gray-400 font-medium uppercase tracking-wider">Achievements</h3>
-        <span className="text-xs text-gray-500">
+        <h3 className="text-sm text-text-muted font-medium uppercase tracking-wider">Achievements</h3>
+        <span className="text-xs text-text-muted">
           {unlockedCount} / {achievements.length}
         </span>
       </div>
@@ -25,8 +25,8 @@ export function AchievementGrid({ userAchievements }: AchievementGridProps) {
               relative flex items-center justify-center w-12 h-12 rounded-xl
               transition-all
               ${a.unlocked
-                ? 'bg-gray-700/50 hover:bg-gray-700'
-                : 'bg-gray-800/30 opacity-30 grayscale'
+                ? 'bg-secondary-surface hover:bg-card-border/50'
+                : 'bg-secondary-surface opacity-40 grayscale'
               }
             `}
             title={`${a.name}: ${a.description}${a.unlocked ? ' (Unlocked!)' : ''}`}
