@@ -122,22 +122,12 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
     if (pressedThisTrial.has(type)) return;
     setPressedThisTrial((prev) => new Set(prev).add(type));
 
-    // Instant feedback: correct press or false alarm
-    if (currentTrial >= TUTORIAL_N_LEVEL) {
-      const wasMatch = isMatch(sequence, currentTrial, TUTORIAL_N_LEVEL, type);
-      setButtonFeedback((prev) => {
-        const next = new Map(prev);
-        next.set(type, wasMatch ? 'correct' : 'wrong');
-        return next;
-      });
-    }
-
     // If current step is waiting for this key, advance the step
     if (currentStep?.waitForKey === type) {
       setStepIndex((prev) => prev + 1);
       setPaused(false);
     }
-  }, [pressedThisTrial, currentStep, currentTrial, sequence]);
+  }, [pressedThisTrial, currentStep]);
 
   const handleNextStep = useCallback(() => {
     const step = TUTORIAL_STEPS[stepIndex];
