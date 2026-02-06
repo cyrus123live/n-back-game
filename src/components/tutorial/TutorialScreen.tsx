@@ -192,19 +192,31 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
 
   if (phase === 'done') {
     return (
-      <div className="max-w-lg mx-auto py-12 px-5 text-center space-y-6">
-        <div className="w-16 h-16 rounded-full bg-primary-50 flex items-center justify-center">
-          <svg className="w-8 h-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
+      <div className="relative">
+        <div className="flex flex-col items-center gap-4 py-4 opacity-50">
+          <div className="flex items-center justify-between w-full max-w-md px-2">
+            <span className="text-sm text-primary-500 font-medium">Tutorial - 2-Back</span>
+          </div>
+          <TrialProgress current={sequence.length} total={sequence.length} nLevel={TUTORIAL_N_LEVEL} />
+          <GameGrid stimulus={null} activeStimuli={TUTORIAL_STIMULI} flashClass="" />
+          <MatchButtons activeStimuli={TUTORIAL_STIMULI} onMatch={() => {}} pressedThisTrial={new Set()} disabled />
         </div>
-        <h1 className="text-3xl font-heading font-bold text-text-primary">Tutorial Complete!</h1>
-        <p className="text-text-muted">
-          You know the basics of N-Back training. Head to settings to customize your game and start playing!
-        </p>
-        <button onClick={handleComplete} className="btn-primary text-lg px-8 py-4">
-          Start Playing
-        </button>
+        <div className="fixed inset-0 z-40 pointer-events-none">
+          <div className="absolute inset-0 bg-black/20 pointer-events-auto" />
+          <div className="absolute inset-0 flex items-end justify-center pb-8 px-4 pointer-events-none">
+            <div className="card max-w-md w-full space-y-3 pointer-events-auto relative z-50 border-primary-500/30">
+              <h3 className="font-bold text-lg text-primary-500">Tutorial Complete</h3>
+              <p className="text-sm text-text-secondary leading-relaxed">
+                You know the basics of N-Back training. Head to settings to customize your game and start playing!
+              </p>
+              <div className="flex justify-end pt-1">
+                <button onClick={handleComplete} className="btn-primary text-sm px-4 py-2">
+                  Start Playing
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
