@@ -228,21 +228,25 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
           <label className="block text-sm text-text-muted mb-3 font-medium">
             {adaptive ? 'Starting Level' : 'N-Back Level'}
           </label>
-          <div className="flex gap-2 flex-wrap">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
-              <button
-                key={n}
-                onClick={() => setNLevel(n)}
-                className={`
-                  w-11 h-11 rounded-xl font-bold text-lg transition-all
-                  ${n === nLevel
-                    ? 'bg-primary-500 text-white ring-2 ring-primary-300'
-                    : 'bg-secondary-surface text-text-secondary hover:bg-card-border'
-                  }
-                `}
-              >
-                {n}
-              </button>
+          <div className="flex flex-col gap-2">
+            {[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]].map((row, ri) => (
+              <div key={ri} className="flex gap-2">
+                {row.map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setNLevel(n)}
+                    className={`
+                      flex-1 h-11 rounded-xl font-bold text-lg transition-all
+                      ${n === nLevel
+                        ? 'bg-primary-500 text-white ring-2 ring-primary-300'
+                        : 'bg-secondary-surface text-text-secondary hover:bg-card-border'
+                      }
+                    `}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
             ))}
           </div>
         </div>
@@ -261,9 +265,9 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
                   onClick={() => toggleStimulus(type)}
                   className={`
                     flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition-all text-xs font-medium
-                    border-2 hover:scale-[1.03] active:scale-[0.98]
+                    border-2
                     ${active
-                      ? 'hover:brightness-95'
+                      ? ''
                       : 'border-card-border bg-secondary-surface hover:bg-card-border/50'
                     }
                   `}
@@ -272,6 +276,16 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
                       ? { borderColor: STIMULUS_COLORS[type], backgroundColor: `${STIMULUS_COLORS[type]}12` }
                       : {}
                   }
+                  onMouseEnter={(e) => {
+                    if (activeStimuli.includes(type)) {
+                      e.currentTarget.style.backgroundColor = `${STIMULUS_COLORS[type]}22`;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (activeStimuli.includes(type)) {
+                      e.currentTarget.style.backgroundColor = `${STIMULUS_COLORS[type]}12`;
+                    }
+                  }}
                 >
                   <div
                     className={`w-2.5 h-2.5 rounded-full transition-all ${active ? '' : 'opacity-30'}`}
