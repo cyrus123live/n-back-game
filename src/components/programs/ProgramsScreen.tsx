@@ -236,9 +236,7 @@ export function ProgramsScreen({ onBack, onStartSession }: ProgramsScreenProps) 
                   <p className="text-sm text-text-muted">{template.description}</p>
 
                   <div className="flex flex-wrap gap-2">
-                    {activeForThis ? (
-                      <span className="text-sm text-primary-500 py-2">Currently active</span>
-                    ) : (
+                    {activeForThis ? null : (
                       <button
                         onClick={() => handleEnroll(template.id)}
                         className="btn-primary flex-1 min-w-0"
