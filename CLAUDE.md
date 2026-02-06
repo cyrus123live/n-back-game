@@ -32,7 +32,7 @@ Strengthen working memory for as many people as possible. Every design and engin
 - **Programs**: `lib/programs.ts` - 3 training program templates (beginner/intermediate/advanced, 20 sessions each) with score-gated progression (70% to advance, 90% to skip ahead)
 - **Tutorial**: `lib/tutorialData.ts` - pre-scripted 8-trial 2-back walkthrough with position + color stimuli. Auto-shows on first visit (checks `localStorage['unreel-tutorial-seen']`)
 - **State**: No state library; `App.tsx` manages view routing via `useState`, game state lives in `useGameLoop`
-- **Components**: `components/game/` (gameplay), `components/dashboard/` (home + inline settings), `components/results/`, `components/history/` (charts, avg-by-type, achievements, session list), `components/layout/`, `components/tutorial/`, `components/programs/`, `components/pwa/` (install prompt), `components/icons/` (FlameIcon, TargetIcon, AchievementIcon SVG components)
+- **Components**: `components/game/` (gameplay), `components/dashboard/` (home + inline settings), `components/results/`, `components/history/` (charts, best-score-by-day, achievements grouped by category, session list), `components/layout/`, `components/tutorial/`, `components/programs/`, `components/pwa/` (install prompt), `components/icons/` (FlameIcon, TargetIcon, AchievementIcon, StimulusIcon SVG components)
 - **Theme**: `lib/theme.ts` — `getPreferredTheme()`, `applyTheme()`, `toggleTheme()`, `getCurrentTheme()`. Persists to localStorage key `unreel-theme`. Falls back to `prefers-color-scheme` media query
 - **Offline queue**: `lib/offlineQueue.ts` — stores failed session saves in localStorage (`unreel-offline-sessions`), syncs when back online
 
@@ -100,7 +100,7 @@ Dark mode uses CSS custom properties defined in `src/index.css` (`:root` and `.d
 
 **Semantic Tailwind tokens** (defined in `tailwind.config.js`, backed by CSS variables): `surface`, `card`, `card-border`, `secondary-surface`, `text-primary`, `text-secondary`, `text-muted`, `primary-50` through `primary-950`. Tailwind `darkMode: 'class'` is configured but most dark mode works through CSS variable switching, not `dark:` prefixes
 
-**Icons**: All decorative emojis replaced with SVG icon components in `components/icons/`. `AchievementDef.icon` field removed — achievements render category-based SVG icons via `<AchievementIcon category={...}>`
+**Icons**: All decorative emojis replaced with SVG icon components in `components/icons/`. `AchievementDef.icon` field removed — achievements render category-based SVG icons via `<AchievementIcon category={...}>`. `StimulusIcon` renders per-type SVGs (grid, droplet, shapes, hash, speaker) used in both match buttons and dashboard stimulus toggles
 
 **Dashboard greeting**: Time-of-day based — "Good morning" (<12), "Good afternoon" (<17), "Good evening" (else). Subtitle: "Ready to train?" (new users) / "Welcome back" (returning)
 
@@ -115,7 +115,7 @@ Dark mode uses CSS custom properties defined in `src/index.css` (`:root` and `.d
 - Adaptive difficulty is between-session only (evaluates at end, recommends next level: >=85% up, <=50% down)
 - Training program progression is score-gated (70% to advance, 90%+ to skip to next phase). Phase boundaries defined in `server/lib/programs.ts` as `TEMPLATE_PHASES`
 - Express `req.params.id` can be `string | string[]` - cast with `as string` in route handlers
-- Dashboard has inline settings (no separate settings screen) — N-level picker, stimuli toggles, collapsible Advanced section (trials, interval, adaptive)
+- Dashboard has inline settings (no separate settings screen) — N-level picker (2 rows of 5, levels 1-10), stimuli toggles (StimulusIcon + tiny label, accent-tinted hover), collapsible Advanced section (trials, interval, adaptive)
 - History tab only visible to signed-in users (wrapped in `<SignedIn>` in Navbar)
 - Programs screen shows sign-up prompt for unauthenticated users, with greyed-out preview of available programs
 - Default stimuli are `['position', 'color']`
@@ -123,10 +123,10 @@ Dark mode uses CSS custom properties defined in `src/index.css` (`:root` and `.d
 - ResultsScreen propagates `newStreak` back to App.tsx via `onStreakUpdate` callback so the Navbar streak counter updates immediately after session save. App.tsx also passes `currentStreak` down to Dashboard so the CompactStatsCard always reflects the latest value (handles race condition where user navigates back before save completes)
 - ResultsScreen shows animated XP level bar for signed-in users: bar fills from old progress to new progress with 1-second animation. Server returns `totalXp` in session save response to enable client-side threshold calculation
 - ResultsScreen shows personal best celebration card (yellow border, `animate-fade-in-up`) when `isPersonalBest` is true. Server checks via `Session.findFirst` at the effective N-level excluding current session. First session at any N-level is always a personal best. Confetti fires for personal best (60 particles) in addition to level-up (80) and high score (40)
-- ResultsScreen shows a "tomorrow hook" message after save — priority chain: program continuation > streak >=7 > streak 2-6 > streak 1 > achievement proximity (within 3 days of milestone) > personal best callback > generic fallback. `getLocalDate()` is exported from `lib/api.ts` for streak danger comparisons
+- ResultsScreen shows a "tomorrow hook" message after save — priority chain: program continuation > streak >=7 > streak 2-6 > achievement proximity (within 3 days of milestone) > personal best callback > generic fallback. `getLocalDate()` is exported from `lib/api.ts` for streak danger comparisons
 - All API calls use `cache: 'no-store'` to prevent browser caching of stale profile/stats data
 - CompactStatsCard combines level/rank, streak, total sessions, XP bar, 12-week activity heatmap, and streak danger indicator into one card. Streak danger shows a countdown banner with warm tinted backgrounds (`bg-[#f0f7ef]` >=8h, `bg-[#faf6e8]` 4-8h, `bg-[#faf0ee]` <4h) when `currentStreak > 0` and the user hasn't played today (compares `lastPlayedDate` vs `getLocalDate()`)
-- History screen shows chart, avg-by-type, achievements, and session list
+- History screen shows best-score-by-day chart (not average), avg-by-type, achievements grouped by category, and session list
 - `server/lib/dates.ts` uses `formatToParts()` with `en-US` locale (not `en-CA`) because `node:20-alpine` ships with `small-icu` which only includes `en-US` — other locales silently fall back to wrong date formats
 - Streak dates use client-provided `localDate` (YYYY-MM-DD) instead of server-side timezone conversion. The client sends `getLocalDate()` in both `saveSession` POST body and `getProfile` query params. Server stores `lastPlayedDate` (String) alongside `lastPlayedAt` (DateTime) for reliable date comparison — avoids Alpine small-icu timezone fallback causing UTC day boundary mismatches
 - PWA service worker (`sw.js`) is generated at build time by `vite-plugin-pwa` (Workbox). Server serves `sw.js` with `Cache-Control: no-cache` so browsers always check for updates
@@ -136,6 +136,12 @@ Dark mode uses CSS custom properties defined in `src/index.css` (`:root` and `.d
 - Dark mode theme is applied before React renders (`main.tsx` calls `applyTheme(getPreferredTheme())` synchronously) to prevent flash-of-wrong-theme. System preference listener only fires when no manual `unreel-theme` localStorage entry exists
 - Navbar has sun/moon toggle button for theme switching. Sun shown in dark mode, moon in light mode
 - `AchievementDef` no longer has an `icon` field — all achievement icons are rendered via `<AchievementIcon category={...}>` which selects from 6 category-based SVGs (sessions=play, streaks=flame, performance=target, combo=lightning, level=arrow-up, modes=grid)
+- Match buttons use `StimulusIcon` + key hint, equal-width (`flex-1`) in a single row — no left/right hand split or divider. No per-button feedback; only grid flash feedback
+- `ComboCounter` always renders a fixed `h-10` container (never returns `null`) to prevent layout jitter when combo activates
+- Game screen has `px-4` horizontal padding for mobile
+- Tutorial completion is an overlay dialog (same style as `TutorialOverlay` steps), not a separate full-screen view
+- CSS variable opacity limitation: Tailwind's `/50` opacity modifier doesn't work with `var()` values — use full-opacity semantic tokens instead (e.g., `bg-secondary-surface` not `bg-card/50`)
+- Programs "Available Programs" section does not show "Currently active" label (active program only shown on Dashboard via `ProgramCard`)
 
 ## Git
 
