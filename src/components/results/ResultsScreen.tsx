@@ -318,6 +318,11 @@ export function ResultsScreen({
                   }}
                 />
               </div>
+              <div className="flex gap-4 text-xs text-text-muted">
+                <span>Hits: {result.hits}</span>
+                <span>Misses: {result.misses}</span>
+                <span>False alarms: {result.falseAlarms}</span>
+              </div>
             </div>
           );
         })}
