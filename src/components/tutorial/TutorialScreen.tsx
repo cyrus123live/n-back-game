@@ -193,7 +193,11 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
   if (phase === 'done') {
     return (
       <div className="max-w-lg mx-auto py-12 px-5 text-center space-y-6">
-        <div className="text-5xl">🎉</div>
+        <div className="w-16 h-16 rounded-full bg-primary-50 flex items-center justify-center">
+          <svg className="w-8 h-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
         <h1 className="text-3xl font-heading font-bold text-text-primary">Tutorial Complete!</h1>
         <p className="text-text-muted">
           You know the basics of N-Back training. Head to settings to customize your game and start playing!

@@ -8,7 +8,7 @@ Strengthen working memory for as many people as possible. Every design and engin
 
 - **Stack**: React 18 + TypeScript + Vite (frontend), Express + Prisma (backend), Tailwind CSS, Recharts, `vite-plugin-pwa`
 - **Fonts**: Libre Franklin (headings, 700/800), Inter (body, 400/500/600) via Google Fonts
-- **Design**: Light, warm, NYT Games-inspired theme — off-white backgrounds, white cards with subtle shadows, warm green (`#538d4e`) primary accent
+- **Design**: Light/dark theme with NYT Games-inspired warmth — CSS custom properties auto-switch via `.dark` class on `<html>`. Warm green (`#538d4e`) primary accent
 - **Auth**: Clerk (`@clerk/clerk-react` frontend, `@clerk/express` backend)
 - **DB**: PostgreSQL via Prisma ORM
 - **Deploy**: Dockerized single container on Railway
@@ -32,7 +32,8 @@ Strengthen working memory for as many people as possible. Every design and engin
 - **Programs**: `lib/programs.ts` - 3 training program templates (beginner/intermediate/advanced, 20 sessions each) with score-gated progression (70% to advance, 90% to skip ahead)
 - **Tutorial**: `lib/tutorialData.ts` - pre-scripted 8-trial 2-back walkthrough with position + color stimuli. Auto-shows on first visit (checks `localStorage['unreel-tutorial-seen']`)
 - **State**: No state library; `App.tsx` manages view routing via `useState`, game state lives in `useGameLoop`
-- **Components**: `components/game/` (gameplay), `components/dashboard/` (home + inline settings), `components/results/`, `components/history/` (charts, avg-by-type, achievements, session list), `components/layout/`, `components/tutorial/`, `components/programs/`, `components/pwa/` (install prompt)
+- **Components**: `components/game/` (gameplay), `components/dashboard/` (home + inline settings), `components/results/`, `components/history/` (charts, avg-by-type, achievements, session list), `components/layout/`, `components/tutorial/`, `components/programs/`, `components/pwa/` (install prompt), `components/icons/` (FlameIcon, TargetIcon, AchievementIcon SVG components)
+- **Theme**: `lib/theme.ts` — `getPreferredTheme()`, `applyTheme()`, `toggleTheme()`, `getCurrentTheme()`. Persists to localStorage key `unreel-theme`. Falls back to `prefers-color-scheme` media query
 - **Offline queue**: `lib/offlineQueue.ts` — stores failed session saves in localStorage (`unreel-offline-sessions`), syncs when back online
 
 ### Backend (`server/`)
@@ -69,19 +70,21 @@ Session has optional adaptive fields: `adaptive`, `startingLevel`, `endingLevel`
 
 ## Design System
 
-### Theme: Light, Warm, Restrained (NYT Games-inspired)
+### Theme: Light + Dark, Warm, Restrained (NYT Games-inspired)
 
-**Color Palette**:
-| Role | Value |
-|------|-------|
-| Page background | `#fafaf8` (warm off-white) |
-| Card background | `#ffffff` + `shadow-sm` |
-| Card border | `#e5e2d9` (warm gray) |
-| Secondary surface | `#f5f5f0` (warm light gray) |
-| Primary accent | `#538d4e` (warm green) |
-| Text primary | `#1a1a1a` |
-| Text secondary | `#3a3a3a` |
-| Text muted | `#787774` |
+Dark mode uses CSS custom properties defined in `src/index.css` (`:root` and `.dark` blocks). Tailwind semantic tokens reference `var(--color-*)` so all components auto-switch. Toggle via `.dark` class on `<html>`, managed by `src/lib/theme.ts`.
+
+**Color Palette** (Light / Dark):
+| Role | Light | Dark |
+|------|-------|------|
+| Page background (`surface`) | `#fafaf8` | `#1a1917` |
+| Card background (`card`) | `#ffffff` | `#242321` |
+| Card border (`card-border`) | `#e5e2d9` | `#3a3835` |
+| Secondary surface | `#f5f5f0` | `#2a2927` |
+| Primary accent | `#538d4e` (same both) | |
+| Text primary | `#1a1a1a` | `#e8e6e3` |
+| Text secondary | `#3a3a3a` | `#b8b5b0` |
+| Text muted | `#787774` | `#8a8884` |
 
 **Stimulus Colors** (softened, not neon): Position `#577fb5`, Color `#538d4e`, Shape `#8b6eae`, Number `#c4a035`, Audio `#b85c4e`
 
@@ -95,7 +98,9 @@ Session has optional adaptive fields: `adaptive`, `startingLevel`, `endingLevel`
 
 **Buttons**: Primary = green bg + white text + `active:scale-[0.98]`. Secondary = outline style (transparent bg, warm gray border)
 
-**Semantic Tailwind tokens** (defined in `tailwind.config.js`): `surface`, `card`, `card-border`, `secondary-surface`, `text-primary`, `text-secondary`, `text-muted`, `primary-50` through `primary-950`
+**Semantic Tailwind tokens** (defined in `tailwind.config.js`, backed by CSS variables): `surface`, `card`, `card-border`, `secondary-surface`, `text-primary`, `text-secondary`, `text-muted`, `primary-50` through `primary-950`. Tailwind `darkMode: 'class'` is configured but most dark mode works through CSS variable switching, not `dark:` prefixes
+
+**Icons**: All decorative emojis replaced with SVG icon components in `components/icons/`. `AchievementDef.icon` field removed — achievements render category-based SVG icons via `<AchievementIcon category={...}>`
 
 **Dashboard greeting**: Time-of-day based — "Good morning" (<12), "Good afternoon" (<17), "Good evening" (else). Subtitle: "Ready to train?" (new users) / "Welcome back" (returning)
 
@@ -128,6 +133,9 @@ Session has optional adaptive fields: `adaptive`, `startingLevel`, `endingLevel`
 - API routes use `NetworkOnly` caching strategy — never served from SW cache. Clerk requires network for auth
 - Offline session queue lives in localStorage (`unreel-offline-sessions`). When `saveSession` fails due to network error, session is queued. App syncs on page load and on `online` event. Queued sessions skip XP bar, achievements, confetti, and streak updates on ResultsScreen
 - Install prompt (`beforeinstallprompt`) only fires on Android/desktop Chrome — not available on iOS. Dismiss flag stored in `localStorage['unreel-install-dismissed']`. Hidden when app is already installed (checks `display-mode: standalone`)
+- Dark mode theme is applied before React renders (`main.tsx` calls `applyTheme(getPreferredTheme())` synchronously) to prevent flash-of-wrong-theme. System preference listener only fires when no manual `unreel-theme` localStorage entry exists
+- Navbar has sun/moon toggle button for theme switching. Sun shown in dark mode, moon in light mode
+- `AchievementDef` no longer has an `icon` field — all achievement icons are rendered via `<AchievementIcon category={...}>` which selects from 6 category-based SVGs (sessions=play, streaks=flame, performance=target, combo=lightning, level=arrow-up, modes=grid)
 
 ## Git
 

@@ -6,6 +6,8 @@ import { STIMULUS_LABELS, STIMULUS_COLORS, getAchievementDef, getRank, getLevelT
 import { XPAnimation } from './XPAnimation';
 import { saveSession, completeProgramSession } from '../../lib/api';
 import { getTemplate } from '../../lib/programs';
+import { AchievementIcon } from '../icons/AchievementIcon';
+import { FlameIcon } from '../icons/FlameIcon';
 
 interface ResultsScreenProps {
   settings: GameSettings;
@@ -182,10 +184,7 @@ export function ResultsScreen({
       return `${newStreak} days and counting — come back tomorrow to keep it going`;
     }
 
-    // 4. Streak starting (1)
-    if (newStreak === 1) {
-      return 'Play again tomorrow to start building a streak';
-    }
+    // 4. Streak starting (1) — skip, no message needed
 
     // 5. Achievement proximity — streak milestones
     const milestones = [7, 14, 30, 60, 100];
@@ -261,7 +260,7 @@ export function ResultsScreen({
               key={a.id}
               className="card border-primary-500/30 flex items-center gap-3 animate-fade-in-up"
             >
-              <span className="text-3xl">{a.icon}</span>
+              <AchievementIcon category={a.category} className="w-8 h-8" />
               <div>
                 <div className="font-bold text-primary-500">{a.name}</div>
                 <div className="text-sm text-text-muted">{a.description}</div>
@@ -337,9 +336,7 @@ export function ResultsScreen({
           <div className="text-2xl font-bold text-text-primary">{maxCombo}</div>
         </div>
         {maxCombo >= 10 && (
-          <div className="text-3xl">
-            {maxCombo >= 15 ? '🔥' : '⚡'}
-          </div>
+          <FlameIcon className={`w-8 h-8 ${maxCombo >= 15 ? 'text-[#c4a035]' : 'text-[#8b6eae]'}`} />
         )}
       </div>
 

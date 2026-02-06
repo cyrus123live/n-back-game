@@ -73,46 +73,46 @@ export const STIMULUS_COLORS: Record<string, string> = {
 
 export const ACHIEVEMENTS: AchievementDef[] = [
   // Sessions
-  { id: 'first_steps', name: 'First Steps', description: 'Complete your first session', icon: '👣', category: 'sessions' },
-  { id: 'brain_warm', name: 'Brain Warm-Up', description: 'Complete 5 sessions', icon: '🧠', category: 'sessions' },
-  { id: 'getting_warmed_up', name: 'Getting Warmed Up', description: 'Complete 10 sessions', icon: '🔥', category: 'sessions' },
-  { id: 'marathon', name: 'Marathon Runner', description: 'Complete 50 sessions', icon: '🏃', category: 'sessions' },
-  { id: 'centurion', name: 'Centurion', description: 'Complete 100 sessions', icon: '🏛️', category: 'sessions' },
+  { id: 'first_steps', name: 'First Steps', description: 'Complete your first session', category: 'sessions' },
+  { id: 'brain_warm', name: 'Brain Warm-Up', description: 'Complete 5 sessions', category: 'sessions' },
+  { id: 'getting_warmed_up', name: 'Getting Warmed Up', description: 'Complete 10 sessions', category: 'sessions' },
+  { id: 'marathon', name: 'Marathon Runner', description: 'Complete 50 sessions', category: 'sessions' },
+  { id: 'centurion', name: 'Centurion', description: 'Complete 100 sessions', category: 'sessions' },
 
   // Streaks
-  { id: 'dedicated_7', name: 'Dedicated', description: '7-day streak', icon: '📅', category: 'streaks' },
-  { id: 'committed_14', name: 'Committed', description: '14-day streak', icon: '💪', category: 'streaks' },
-  { id: 'unstoppable_30', name: 'Unstoppable', description: '30-day streak', icon: '⚡', category: 'streaks' },
-  { id: 'legendary_60', name: 'Legendary', description: '60-day streak', icon: '🌟', category: 'streaks' },
-  { id: 'immortal_100', name: 'Immortal', description: '100-day streak', icon: '👑', category: 'streaks' },
+  { id: 'dedicated_7', name: 'Dedicated', description: '7-day streak', category: 'streaks' },
+  { id: 'committed_14', name: 'Committed', description: '14-day streak', category: 'streaks' },
+  { id: 'unstoppable_30', name: 'Unstoppable', description: '30-day streak', category: 'streaks' },
+  { id: 'legendary_60', name: 'Legendary', description: '60-day streak', category: 'streaks' },
+  { id: 'immortal_100', name: 'Immortal', description: '100-day streak', category: 'streaks' },
 
   // Performance
-  { id: 'sharp_mind', name: 'Sharp Mind', description: '90%+ accuracy on 3-back', icon: '🎯', category: 'performance' },
-  { id: 'high_scorer', name: 'High Scorer', description: '95%+ accuracy on 2+ back', icon: '📊', category: 'performance' },
-  { id: 'perfectionist', name: 'Perfectionist', description: '100% accuracy on any round', icon: '💎', category: 'performance' },
+  { id: 'sharp_mind', name: 'Sharp Mind', description: '90%+ accuracy on 3-back', category: 'performance' },
+  { id: 'high_scorer', name: 'High Scorer', description: '95%+ accuracy on 2+ back', category: 'performance' },
+  { id: 'perfectionist', name: 'Perfectionist', description: '100% accuracy on any round', category: 'performance' },
 
   // Combo
-  { id: 'combo_starter', name: 'Combo Starter', description: 'Reach 5 combo', icon: '🔗', category: 'combo' },
-  { id: 'combo_master', name: 'Combo Master', description: 'Reach 10 combo', icon: '⛓️', category: 'combo' },
-  { id: 'combo_king', name: 'Combo King', description: 'Reach 15 combo', icon: '🏆', category: 'combo' },
-  { id: 'combo_legend', name: 'Combo Legend', description: 'Reach 20 combo', icon: '🌈', category: 'combo' },
+  { id: 'combo_starter', name: 'Combo Starter', description: 'Reach 5 combo', category: 'combo' },
+  { id: 'combo_master', name: 'Combo Master', description: 'Reach 10 combo', category: 'combo' },
+  { id: 'combo_king', name: 'Combo King', description: 'Reach 15 combo', category: 'combo' },
+  { id: 'combo_legend', name: 'Combo Legend', description: 'Reach 20 combo', category: 'combo' },
 
   // Level
-  { id: 'level_5', name: 'Level Up', description: 'Reach level 5', icon: '⬆️', category: 'level' },
-  { id: 'level_10', name: 'Double Digits', description: 'Reach level 10', icon: '🔟', category: 'level' },
-  { id: 'level_15', name: 'Rising Star', description: 'Reach level 15', icon: '⭐', category: 'level' },
-  { id: 'level_20', name: 'Elite', description: 'Reach level 20', icon: '🏅', category: 'level' },
-  { id: 'grandmaster', name: 'Grandmaster', description: 'Reach level 25', icon: '🎖️', category: 'level' },
-  { id: 'xp_hunter', name: 'XP Hunter', description: 'Earn 1000 total XP', icon: '💰', category: 'level' },
+  { id: 'level_5', name: 'Level Up', description: 'Reach level 5', category: 'level' },
+  { id: 'level_10', name: 'Double Digits', description: 'Reach level 10', category: 'level' },
+  { id: 'level_15', name: 'Rising Star', description: 'Reach level 15', category: 'level' },
+  { id: 'level_20', name: 'Elite', description: 'Reach level 20', category: 'level' },
+  { id: 'grandmaster', name: 'Grandmaster', description: 'Reach level 25', category: 'level' },
+  { id: 'xp_hunter', name: 'XP Hunter', description: 'Earn 1000 total XP', category: 'level' },
 
   // Modes
-  { id: 'dual_mode', name: 'Dual Mode', description: 'Play with 2 stimulus types', icon: '2️⃣', category: 'modes' },
-  { id: 'triple_mode', name: 'Triple Mode', description: 'Play with 3 stimulus types', icon: '3️⃣', category: 'modes' },
-  { id: 'quad_mode', name: 'Quad Mode', description: 'Play with 4 stimulus types', icon: '4️⃣', category: 'modes' },
-  { id: 'quintuple_threat', name: 'Quintuple Threat', description: 'Play with all 5 stimulus types', icon: '5️⃣', category: 'modes' },
-  { id: 'triple_threat', name: 'Triple N-Back', description: 'Play 3-back or higher', icon: '🧩', category: 'modes' },
-  { id: 'quad_core', name: 'Quad Core', description: 'Play 4-back or higher', icon: '💻', category: 'modes' },
-  { id: 'five_back', name: 'Five Back', description: 'Play 5-back or higher', icon: '🤯', category: 'modes' },
+  { id: 'dual_mode', name: 'Dual Mode', description: 'Play with 2 stimulus types', category: 'modes' },
+  { id: 'triple_mode', name: 'Triple Mode', description: 'Play with 3 stimulus types', category: 'modes' },
+  { id: 'quad_mode', name: 'Quad Mode', description: 'Play with 4 stimulus types', category: 'modes' },
+  { id: 'quintuple_threat', name: 'Quintuple Threat', description: 'Play with all 5 stimulus types', category: 'modes' },
+  { id: 'triple_threat', name: 'Triple N-Back', description: 'Play 3-back or higher', category: 'modes' },
+  { id: 'quad_core', name: 'Quad Core', description: 'Play 4-back or higher', category: 'modes' },
+  { id: 'five_back', name: 'Five Back', description: 'Play 5-back or higher', category: 'modes' },
 ];
 
 export function getAchievementDef(id: string): AchievementDef | undefined {

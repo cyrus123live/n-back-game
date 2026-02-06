@@ -110,7 +110,6 @@ export interface AchievementDef {
   id: string;
   name: string;
   description: string;
-  icon: string;
   category: 'sessions' | 'streaks' | 'performance' | 'combo' | 'level' | 'modes';
 }
 

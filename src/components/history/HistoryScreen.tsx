@@ -154,10 +154,10 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
               </h3>
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={chartData.data}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e2d9" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-card-border)" />
                   <XAxis
                     dataKey="date"
-                    stroke="#787774"
+                    stroke="var(--color-text-muted)"
                     fontSize={11}
                     tickFormatter={(val: string) => {
                       const [, m, d] = val.split('-');
@@ -165,18 +165,18 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
                     }}
                   />
                   <YAxis
-                    stroke="#787774"
+                    stroke="var(--color-text-muted)"
                     fontSize={11}
                     domain={[0, 100]}
                     tickFormatter={(val) => `${val}%`}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #e5e2d9',
+                      backgroundColor: 'var(--color-card)',
+                      border: '1px solid var(--color-card-border)',
                       borderRadius: '8px',
                       fontSize: '12px',
-                      color: '#3a3a3a',
+                      color: 'var(--color-text-secondary)',
                     }}
                     labelFormatter={(label: string) => {
                       const [, m, d] = String(label).split('-');

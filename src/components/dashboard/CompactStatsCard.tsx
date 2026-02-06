@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getRank } from '../../lib/constants';
 import { getLocalDate } from '../../lib/api';
 import type { StatsData } from '../../types';
+import { FlameIcon } from '../icons/FlameIcon';
 
 interface CompactStatsCardProps {
   level: number;
@@ -104,7 +105,7 @@ export function CompactStatsCard({
         <div className="flex items-center gap-4 text-sm">
           <span className="flex items-center gap-1">
             <span className="text-[#c4a035] font-bold">{currentStreak}</span>
-            <span>🔥</span>
+            <FlameIcon className="w-4 h-4 text-[#c4a035]" />
           </span>
           <span className="flex items-center gap-1 text-text-muted">
             <span className="font-bold text-text-secondary">{totalSessions}</span>
@@ -153,7 +154,7 @@ export function CompactStatsCard({
                 className="w-[14px] h-[14px] rounded-[3px] transition-colors"
                 style={{
                   backgroundColor: day.count === 0
-                    ? '#e5e2d9'
+                    ? 'var(--color-card-border)'
                     : day.score >= 0.8
                       ? '#538d4e'
                       : day.score >= 0.6

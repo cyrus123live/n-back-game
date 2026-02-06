@@ -124,7 +124,6 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
         <div className="text-8xl font-black text-primary-500 animate-bounce-in" key={countdown}>
           {countdown}
         </div>
-        <p className="text-text-muted">Get ready...</p>
         <button onClick={onCancel} className="text-sm text-text-muted hover:text-text-secondary">
           Cancel
         </button>

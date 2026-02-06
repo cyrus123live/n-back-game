@@ -5,6 +5,7 @@ import { getPrograms, enrollInProgram, abandonProgram } from '../../lib/api';
 import { PROGRAM_TEMPLATES, getTemplate, getRequiredScore } from '../../lib/programs';
 import { ProgramDetail } from './ProgramDetail';
 import { STIMULUS_LABELS } from '../../lib/constants';
+import { TargetIcon } from '../icons/TargetIcon';
 
 interface ProgramsScreenProps {
   onBack: () => void;
@@ -96,7 +97,7 @@ export function ProgramsScreen({ onBack, onStartSession }: ProgramsScreenProps) 
       ) : !isSignedIn ? (
         <div className="space-y-6">
           <div className="card border-primary-500/30 text-center space-y-4">
-            <div className="text-4xl">🎯</div>
+            <TargetIcon className="w-10 h-10 text-primary-500" />
             <h2 className="text-xl font-bold text-text-primary">Structured Training Programs</h2>
             <p className="text-text-muted">
               Follow a guided 20-day program designed to progressively challenge your working memory.

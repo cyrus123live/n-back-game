@@ -1,5 +1,6 @@
 import type { UserAchievement } from '../../types';
 import { getAchievementsWithStatus } from '../../lib/achievements';
+import { AchievementIcon } from '../icons/AchievementIcon';
 
 interface AchievementGridProps {
   userAchievements: UserAchievement[];
@@ -31,7 +32,7 @@ export function AchievementGrid({ userAchievements }: AchievementGridProps) {
             `}
             title={`${a.name}: ${a.description}${a.unlocked ? ' (Unlocked!)' : ''}`}
           >
-            <span className="text-2xl">{a.icon}</span>
+            <AchievementIcon category={a.category} className="w-6 h-6" />
           </div>
         ))}
       </div>

@@ -365,7 +365,7 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
               >
                 <div
                   className={`
-                    absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-sm transition-transform duration-200
+                    absolute top-0.5 w-6 h-6 rounded-full bg-white dark:bg-text-primary shadow-sm transition-transform duration-200
                     ${adaptive ? 'translate-x-5' : 'translate-x-0.5'}
                   `}
                 />

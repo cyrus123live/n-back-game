@@ -45,7 +45,7 @@ export function GameGrid({ stimulus, activeStimuli, flashClass }: GameGridProps)
       <div className={`relative rounded-2xl border-2 border-card-border bg-secondary-surface p-3 ${flashClass}`}>
         <div className="flex items-center justify-center w-[240px] h-[240px] sm:w-[300px] sm:h-[300px]">
           {stimulus && (
-            <div className="w-24 h-24 rounded-xl bg-white border border-card-border flex items-center justify-center animate-scale-up">
+            <div className="w-24 h-24 rounded-xl bg-card border border-card-border flex items-center justify-center animate-scale-up">
               {cellContent}
             </div>
           )}
@@ -65,8 +65,8 @@ export function GameGrid({ stimulus, activeStimuli, flashClass }: GameGridProps)
               rounded-lg border flex items-center justify-center
               transition-all duration-150
               ${stimulus && stimulus.position === i
-                ? 'bg-white border-card-border shadow-sm'
-                : 'bg-white/50 border-card-border/50'
+                ? 'bg-card border-card-border shadow-sm'
+                : 'bg-card/50 border-card-border/50'
               }
             `}
           >

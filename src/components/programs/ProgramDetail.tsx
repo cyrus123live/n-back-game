@@ -25,7 +25,7 @@ export function ProgramDetail({ template, program }: ProgramDetailProps) {
             key={session.day}
             className={`
               flex items-center gap-3 p-3 rounded-xl text-sm
-              ${isCurrent ? 'bg-primary-50 border border-primary-500/30' : isCompleted ? 'bg-secondary-surface' : 'bg-white'}
+              ${isCurrent ? 'bg-primary-50 border border-primary-500/30' : isCompleted ? 'bg-secondary-surface' : 'bg-card'}
               ${isCompleted ? 'opacity-60' : ''}
             `}
           >

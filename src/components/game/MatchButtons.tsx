@@ -91,7 +91,7 @@ function MatchButton({
           ? ''
           : pressed
           ? 'scale-[0.98]'
-          : 'border-card-border bg-white hover:bg-secondary-surface hover:border-text-muted/30'
+          : 'border-card-border bg-card hover:bg-secondary-surface hover:border-text-muted/30'
         }
         disabled:opacity-50 disabled:cursor-not-allowed
       `}

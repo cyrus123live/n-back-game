@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { DailyChallenge as DailyChallengeType } from '../../types';
 import { STIMULUS_LABELS } from '../../lib/constants';
+import { TargetIcon } from '../icons/TargetIcon';
 
 interface DailyChallengeProps {
   challenge: DailyChallengeType | null;
@@ -58,7 +59,7 @@ export function DailyChallenge({ challenge, onPlay }: DailyChallengeProps) {
             <span className="text-xs text-text-muted">Resets in {timeLeft}</span>
           </div>
         </div>
-        <div className="text-4xl group-hover:scale-110 transition-transform">🎯</div>
+        <TargetIcon className="w-10 h-10 text-primary-500 group-hover:scale-110 transition-transform" />
       </div>
     </button>
   );

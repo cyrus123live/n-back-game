@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -17,13 +18,13 @@ export default {
           900: '#2b4528',
           950: '#142513',
         },
-        surface: '#fafaf8',
-        card: '#ffffff',
-        'card-border': '#e5e2d9',
-        'secondary-surface': '#f5f5f0',
-        'text-primary': '#1a1a1a',
-        'text-secondary': '#3a3a3a',
-        'text-muted': '#787774',
+        surface: 'var(--color-surface)',
+        card: 'var(--color-card)',
+        'card-border': 'var(--color-card-border)',
+        'secondary-surface': 'var(--color-secondary-surface)',
+        'text-primary': 'var(--color-text-primary)',
+        'text-secondary': 'var(--color-text-secondary)',
+        'text-muted': 'var(--color-text-muted)',
       },
       fontFamily: {
         heading: ['"Libre Franklin"', 'system-ui', 'sans-serif'],

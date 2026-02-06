@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-surface: #fafaf8;
+  --color-card: #ffffff;
+  --color-card-border: #e5e2d9;
+  --color-secondary-surface: #f5f5f0;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #3a3a3a;
+  --color-text-muted: #787774;
+}
+
+.dark {
+  --color-surface: #1a1917;
+  --color-card: #242321;
+  --color-card-border: #3a3835;
+  --color-secondary-surface: #2a2927;
+  --color-text-primary: #e8e6e3;
+  --color-text-secondary: #b8b5b0;
+  --color-text-muted: #8a8884;
+}
+
 @layer base {
   body {
     @apply antialiased font-body;
@@ -20,7 +40,7 @@
   }
 
   .card {
-    @apply bg-white border border-card-border rounded-2xl p-8 shadow-sm;
+    @apply bg-card border border-card-border rounded-2xl p-8 shadow-sm;
   }
 
   .key-hint {
