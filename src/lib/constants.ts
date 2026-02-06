@@ -65,7 +65,7 @@ export const STIMULUS_LABELS: Record<string, string> = {
 
 export const STIMULUS_COLORS: Record<string, string> = {
   position: '#577fb5',
-  color: '#538d4e',
+  color: '#4a9ea8',
   shape: '#8b6eae',
   number: '#c4a035',
   audio: '#b85c4e',

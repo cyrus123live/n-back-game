@@ -1,10 +1,11 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import type { StimulusType, GameSettings, SessionResults } from '../../types';
 import { useGameLoop } from '../../hooks/useGameLoop';
 import { useKeyboard } from '../../hooks/useKeyboard';
 import { useAudio } from '../../hooks/useAudio';
 import { GameGrid } from './GameGrid';
 import { MatchButtons } from './MatchButtons';
+import type { ButtonFeedback } from './MatchButtons';
 import { ComboCounter } from './ComboCounter';
 import { TrialProgress } from './TrialProgress';
 
@@ -118,6 +119,18 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
 
   useKeyboard(settings.activeStimuli, handleMatch, gameState.phase === 'playing');
 
+  // Convert trialFeedback to ButtonFeedback format for MatchButtons
+  const buttonFeedback = useMemo(() => {
+    if (!gameState.trialFeedback) return undefined;
+    const map = new Map<StimulusType, ButtonFeedback>();
+    for (const [type, result] of gameState.trialFeedback) {
+      if (result === 'hit') map.set(type, 'correct');
+      else if (result === 'miss') map.set(type, 'missed');
+      else if (result === 'falseAlarm') map.set(type, 'wrong');
+    }
+    return map.size > 0 ? map : undefined;
+  }, [gameState.trialFeedback]);
+
   if (gameState.phase === 'countdown') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8">
@@ -160,6 +173,7 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
         onMatch={handleMatch}
         pressedThisTrial={pressedThisTrial}
         disabled={gameState.phase !== 'playing'}
+        feedback={buttonFeedback}
       />
 
       <p className="text-xs text-text-muted mt-2">
