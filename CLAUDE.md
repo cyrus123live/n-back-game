@@ -100,7 +100,7 @@ Dark mode uses CSS custom properties defined in `src/index.css` (`:root` and `.d
 
 **Semantic Tailwind tokens** (defined in `tailwind.config.js`, backed by CSS variables): `surface`, `card`, `card-border`, `secondary-surface`, `text-primary`, `text-secondary`, `text-muted`, `primary-50` through `primary-950`. Tailwind `darkMode: 'class'` is configured but most dark mode works through CSS variable switching, not `dark:` prefixes
 
-**Icons**: All decorative emojis replaced with SVG icon components in `components/icons/`. `AchievementDef.icon` field removed — achievements render category-based SVG icons via `<AchievementIcon category={...}>`. `StimulusIcon` renders per-type SVGs (grid, droplet, shapes, hash, speaker) used in both match buttons and dashboard stimulus toggles
+**Icons**: All decorative emojis replaced with SVG icon components in `components/icons/`. `AchievementDef.icon` field removed — achievements render category-based SVG icons via `<AchievementIcon category={...}>`. `StimulusIcon` renders per-type SVGs (grid, droplet, shapes, hash, speaker) used in both match buttons and dashboard mode selector
 
 **Dashboard greeting**: Time-of-day based — "Good morning" (<12), "Good afternoon" (<17), "Good evening" (else). Subtitle: "Ready to train?" (new users) / "Welcome back" (returning)
 
@@ -115,10 +115,10 @@ Dark mode uses CSS custom properties defined in `src/index.css` (`:root` and `.d
 - Adaptive difficulty is between-session only (evaluates at end, recommends next level: >=85% up, <=50% down)
 - Training program progression is score-gated (70% to advance, 90%+ to skip to next phase). Phase boundaries defined in `server/lib/programs.ts` as `TEMPLATE_PHASES`
 - Express `req.params.id` can be `string | string[]` - cast with `as string` in route handlers
-- Dashboard has inline settings (no separate settings screen) — N-level picker (2 rows of 5, levels 1-10), stimuli toggles (StimulusIcon + tiny label, accent-tinted hover), collapsible Advanced section (trials, interval, adaptive)
+- Dashboard has inline settings (no separate settings screen) — N-level picker (2 rows of 5, levels 1-10), mode selector (Single/Dual/Triple/Quad preset buttons with StimulusIcon icons), collapsible Advanced section (trials, interval, adaptive). Mode maps: Single=position, Dual=position+color, Triple=position+color+shape, Quad=position+color+shape+number. Audio is not available from the Dashboard mode selector
 - History tab only visible to signed-in users (wrapped in `<SignedIn>` in Navbar)
 - Programs screen shows sign-up prompt for unauthenticated users, with greyed-out preview of available programs
-- Default stimuli are `['position', 'color']`
+- Default mode is `dual` (position + color)
 - GameGrid renders a single centered square when `position` is not in `activeStimuli`
 - ResultsScreen propagates `newStreak` back to App.tsx via `onStreakUpdate` callback so the Navbar streak counter updates immediately after session save. App.tsx also passes `currentStreak` down to Dashboard so the CompactStatsCard always reflects the latest value (handles race condition where user navigates back before save completes)
 - ResultsScreen shows animated XP level bar for signed-in users: bar fills from old progress to new progress with 1-second animation. Server returns `totalXp` in session save response to enable client-side threshold calculation

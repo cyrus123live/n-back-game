@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { UserProfile, StatsData, DailyChallenge as DailyChallengeType, GameSettings, TrainingProgramRecord, StimulusType } from '../../types';
 import { getProfile, getStats, getDailyChallenge, getPrograms, getQueueLength } from '../../lib/api';
-import { STIMULUS_LABELS, STIMULUS_COLORS } from '../../lib/constants';
+import { STIMULUS_COLORS } from '../../lib/constants';
 import { CompactStatsCard } from './CompactStatsCard';
 import { DailyChallenge } from './DailyChallenge';
 import { ProgramCard } from '../programs/ProgramCard';
@@ -17,7 +17,15 @@ interface DashboardProps {
   currentStreak?: number;
 }
 
-const ALL_STIMULI: StimulusType[] = ['position', 'color', 'shape', 'number', 'audio'];
+type GameMode = 'single' | 'dual' | 'triple' | 'quad';
+
+const GAME_MODES: { id: GameMode; label: string; stimuli: StimulusType[] }[] = [
+  { id: 'single', label: 'Single', stimuli: ['position'] },
+  { id: 'dual',   label: 'Dual',   stimuli: ['position', 'color'] },
+  { id: 'triple', label: 'Triple', stimuli: ['position', 'color', 'shape'] },
+  { id: 'quad',   label: 'Quad',   stimuli: ['position', 'color', 'shape', 'number'] },
+];
+
 const TRIAL_OPTIONS = [20, 25, 30];
 const INTERVAL_OPTIONS = [
   { value: 2000, label: '2.0s' },
@@ -40,7 +48,7 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
 
   // Inline settings state
   const [nLevel, setNLevel] = useState(2);
-  const [activeStimuli, setActiveStimuli] = useState<StimulusType[]>(['position', 'color']);
+  const [selectedMode, setSelectedMode] = useState<GameMode>('dual');
   const [trialCount, setTrialCount] = useState(25);
   const [intervalMs, setIntervalMs] = useState(2500);
   const [adaptive, setAdaptive] = useState(false);
@@ -75,15 +83,7 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
     load();
   }, []);
 
-  const toggleStimulus = (type: StimulusType) => {
-    setActiveStimuli((prev) => {
-      if (prev.includes(type)) {
-        if (prev.length <= 1) return prev;
-        return prev.filter((s) => s !== type);
-      }
-      return [...prev, type];
-    });
-  };
+  const activeStimuli = GAME_MODES.find(m => m.id === selectedMode)!.stimuli;
 
   const handleStart = () => {
     onStart({ nLevel, activeStimuli, trialCount, intervalMs, adaptive });
@@ -252,50 +252,38 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
           </div>
         </div>
 
-        {/* Stimuli Toggles */}
+        {/* Mode Selector */}
         <div className="card">
           <label className="block text-sm text-text-muted mb-3 font-medium">
-            Stimuli ({activeStimuli.length} active)
+            Mode
           </label>
           <div className="flex gap-2">
-            {ALL_STIMULI.map((type) => {
-              const active = activeStimuli.includes(type);
+            {GAME_MODES.map((mode) => {
+              const active = selectedMode === mode.id;
               return (
                 <button
-                  key={type}
-                  onClick={() => toggleStimulus(type)}
+                  key={mode.id}
+                  onClick={() => setSelectedMode(mode.id)}
                   className={`
-                    flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition-all text-xs font-medium
-                    border-2
+                    flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl transition-all
+                    border-2 font-medium
                     ${active
-                      ? ''
-                      : 'border-card-border bg-secondary-surface hover:bg-card-border/50'
+                      ? 'border-primary-500 bg-primary-500/10 text-text-primary'
+                      : 'border-card-border bg-secondary-surface text-text-secondary hover:bg-card-border'
                     }
                   `}
-                  style={
-                    active
-                      ? { borderColor: STIMULUS_COLORS[type], backgroundColor: `${STIMULUS_COLORS[type]}12` }
-                      : {}
-                  }
-                  onMouseEnter={(e) => {
-                    if (activeStimuli.includes(type)) {
-                      e.currentTarget.style.backgroundColor = `${STIMULUS_COLORS[type]}22`;
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (activeStimuli.includes(type)) {
-                      e.currentTarget.style.backgroundColor = `${STIMULUS_COLORS[type]}12`;
-                    }
-                  }}
                 >
-                  <StimulusIcon
-                    type={type}
-                    className={`w-5 h-5 transition-all ${active ? '' : 'opacity-40'}`}
-                    style={{ color: STIMULUS_COLORS[type] }}
-                  />
-                  <span className={`text-[10px] ${active ? 'text-text-primary' : 'text-text-muted'}`}>
-                    {STIMULUS_LABELS[type]}
-                  </span>
+                  <div className="flex gap-1">
+                    {mode.stimuli.map((type) => (
+                      <StimulusIcon
+                        key={type}
+                        type={type}
+                        className="w-4 h-4"
+                        style={{ color: STIMULUS_COLORS[type] }}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs">{mode.label}</span>
                 </button>
               );
             })}
