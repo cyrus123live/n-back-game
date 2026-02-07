@@ -18,6 +18,7 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
   const [paused, setPaused] = useState(true);
   const [showingStimulus, setShowingStimulus] = useState(false);
   const [pressedThisTrial, setPressedThisTrial] = useState<Set<StimulusType>>(new Set());
+  const pressedRef = useRef<Set<StimulusType>>(new Set());
   const [flashClass, setFlashClass] = useState('');
   const [phase, setPhase] = useState<'tutorial' | 'practice' | 'done'>('tutorial');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -61,7 +62,7 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
       let anyWrong = false;
       for (const type of TUTORIAL_STIMULI) {
         const wasMatch = isMatch(sequence, currentTrial, TUTORIAL_N_LEVEL, type);
-        const responded = pressedThisTrial.has(type);
+        const responded = pressedRef.current.has(type);
         if ((wasMatch && !responded) || (!wasMatch && responded)) {
           anyWrong = true;
         }
@@ -79,6 +80,7 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
           return;
         }
 
+        pressedRef.current = new Set();
         setPressedThisTrial(new Set());
         setShowingStimulus(false);
 
@@ -97,6 +99,7 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
       return;
     }
 
+    pressedRef.current = new Set();
     setPressedThisTrial(new Set());
     setShowingStimulus(false);
 
@@ -104,18 +107,19 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
       setCurrentTrial(next);
       setShowingStimulus(true);
     }, 300);
-  }, [currentTrial, pressedThisTrial, sequence]);
+  }, [currentTrial, sequence]);
 
   const handleMatch = useCallback((type: StimulusType) => {
-    if (pressedThisTrial.has(type)) return;
-    setPressedThisTrial((prev) => new Set(prev).add(type));
+    if (pressedRef.current.has(type)) return;
+    pressedRef.current = new Set(pressedRef.current).add(type);
+    setPressedThisTrial(new Set(pressedRef.current));
 
     // If current step is waiting for this key, advance the step
     if (currentStep?.waitForKey === type) {
       setStepIndex((prev) => prev + 1);
       setPaused(false);
     }
-  }, [pressedThisTrial, currentStep]);
+  }, [currentStep]);
 
   const handleNextStep = useCallback(() => {
     const step = TUTORIAL_STEPS[stepIndex];
@@ -181,7 +185,7 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
   if (phase === 'done') {
     return (
       <div className="relative">
-        <div className="flex flex-col items-center gap-4 py-4 opacity-50">
+        <div className="flex flex-col items-center gap-4 py-4 px-4 opacity-50">
           <div className="flex items-center justify-between w-full max-w-md px-2">
             <span className="text-sm text-primary-500 font-medium">Tutorial - 2-Back</span>
           </div>
@@ -213,7 +217,7 @@ export function TutorialScreen({ onComplete, onSkip }: TutorialScreenProps) {
 
   return (
     <div className="relative">
-      <div className="flex flex-col items-center gap-4 py-4">
+      <div className="flex flex-col items-center gap-4 py-4 px-4">
         <div className="flex items-center justify-between w-full max-w-md px-2">
           <span className="text-sm text-primary-500 font-medium">Tutorial - 2-Back</span>
           <button

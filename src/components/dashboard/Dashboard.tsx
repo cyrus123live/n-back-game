@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { UserProfile, StatsData, DailyChallenge as DailyChallengeType, GameSettings, TrainingProgramRecord, StimulusType } from '../../types';
 import { getProfile, getStats, getDailyChallenge, getPrograms, getQueueLength } from '../../lib/api';
-import { STIMULUS_LABELS, STIMULUS_COLORS } from '../../lib/constants';
 import { CompactStatsCard } from './CompactStatsCard';
 import { DailyChallenge } from './DailyChallenge';
 import { ProgramCard } from '../programs/ProgramCard';
 import { InstallPrompt } from '../pwa/InstallPrompt';
-import { StimulusIcon } from '../icons/StimulusIcon';
 
 interface DashboardProps {
   onStart: (settings: GameSettings) => void;
@@ -17,7 +15,12 @@ interface DashboardProps {
   currentStreak?: number;
 }
 
-const ALL_STIMULI: StimulusType[] = ['position', 'color', 'shape', 'number', 'audio'];
+const MODE_PRESETS: { label: string; stimuli: StimulusType[] }[] = [
+  { label: 'Mono', stimuli: ['position'] },
+  { label: 'Dual', stimuli: ['position', 'color'] },
+  { label: 'Triple', stimuli: ['position', 'color', 'shape'] },
+  { label: 'Quad', stimuli: ['position', 'color', 'shape', 'number'] },
+];
 const TRIAL_OPTIONS = [20, 25, 30];
 const INTERVAL_OPTIONS = [
   { value: 2000, label: '2.0s' },
@@ -75,14 +78,8 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
     load();
   }, []);
 
-  const toggleStimulus = (type: StimulusType) => {
-    setActiveStimuli((prev) => {
-      if (prev.includes(type)) {
-        if (prev.length <= 1) return prev;
-        return prev.filter((s) => s !== type);
-      }
-      return [...prev, type];
-    });
+  const setMode = (stimuli: StimulusType[]) => {
+    setActiveStimuli(stimuli);
   };
 
   const handleStart = () => {
@@ -252,49 +249,28 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
           </div>
         </div>
 
-        {/* Stimuli Toggles */}
+        {/* Mode Selector */}
         <div className="card">
-          <label className="block text-sm text-text-muted mb-3 font-medium">
-            Stimuli ({activeStimuli.length} active)
-          </label>
+          <label className="block text-sm text-text-muted mb-3 font-medium">Mode</label>
           <div className="flex gap-2">
-            {ALL_STIMULI.map((type) => {
-              const active = activeStimuli.includes(type);
+            {MODE_PRESETS.map((mode) => {
+              const active = mode.stimuli.length === activeStimuli.length &&
+                mode.stimuli.every((s) => activeStimuli.includes(s));
               return (
                 <button
-                  key={type}
-                  onClick={() => toggleStimulus(type)}
+                  key={mode.label}
+                  onClick={() => setMode(mode.stimuli)}
                   className={`
-                    flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition-all text-xs font-medium
-                    border-2
+                    flex-1 flex flex-col items-center gap-0.5 py-2.5 rounded-xl font-medium transition-all
                     ${active
-                      ? ''
-                      : 'border-card-border bg-secondary-surface hover:bg-card-border/50'
+                      ? 'bg-primary-500 text-white'
+                      : 'bg-secondary-surface text-text-secondary hover:bg-card-border'
                     }
                   `}
-                  style={
-                    active
-                      ? { borderColor: STIMULUS_COLORS[type], backgroundColor: `${STIMULUS_COLORS[type]}12` }
-                      : {}
-                  }
-                  onMouseEnter={(e) => {
-                    if (activeStimuli.includes(type)) {
-                      e.currentTarget.style.backgroundColor = `${STIMULUS_COLORS[type]}22`;
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (activeStimuli.includes(type)) {
-                      e.currentTarget.style.backgroundColor = `${STIMULUS_COLORS[type]}12`;
-                    }
-                  }}
                 >
-                  <StimulusIcon
-                    type={type}
-                    className={`w-5 h-5 transition-all ${active ? '' : 'opacity-40'}`}
-                    style={{ color: STIMULUS_COLORS[type] }}
-                  />
-                  <span className={`text-[10px] ${active ? 'text-text-primary' : 'text-text-muted'}`}>
-                    {STIMULUS_LABELS[type]}
+                  <span className="text-sm">{mode.label}</span>
+                  <span className={`text-[10px] ${active ? 'text-white/70' : 'text-text-muted'}`}>
+                    {mode.stimuli.length} {mode.stimuli.length === 1 ? 'stimulus' : 'stimuli'}
                   </span>
                 </button>
               );

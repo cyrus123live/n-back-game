@@ -103,6 +103,6 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     trialIndex: 5,
     phase: 'before',
     title: 'Free Practice',
-    message: 'Now try on your own for the next 10 trials. Look for position and color matches from 2 trials back. You\'ll get green or orange feedback after each trial.',
+    message: 'Now try on your own for the next 10 trials. Look for position and color matches from 2 trials back. The grid will flash green when you\'re correct.',
   },
 ];
