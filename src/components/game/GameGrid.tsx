@@ -18,14 +18,8 @@ export function GameGrid({ stimulus, activeStimuli, flashClass }: GameGridProps)
       {showShape && (
         <ShapeRenderer
           shape={stimulus.shape}
-          color={showColor ? stimulus.color : '#538d4e'}
+          color={showColor ? '#ffffff' : '#538d4e'}
           size={48}
-        />
-      )}
-      {!showShape && showColor && (
-        <div
-          className="w-12 h-12 rounded-full"
-          style={{ backgroundColor: stimulus.color }}
         />
       )}
       {showNumber && (
@@ -45,7 +39,10 @@ export function GameGrid({ stimulus, activeStimuli, flashClass }: GameGridProps)
       <div className={`relative rounded-2xl border-2 border-card-border bg-secondary-surface p-3 ${flashClass}`}>
         <div className="flex items-center justify-center w-[240px] h-[240px] sm:w-[300px] sm:h-[300px]">
           {stimulus && (
-            <div className="w-24 h-24 rounded-xl bg-card border border-card-border flex items-center justify-center animate-scale-up">
+            <div
+              className="w-24 h-24 rounded-xl bg-card border border-card-border flex items-center justify-center animate-scale-up"
+              style={showColor ? { backgroundColor: stimulus.color } : undefined}
+            >
               {cellContent}
             </div>
           )}
@@ -69,6 +66,10 @@ export function GameGrid({ stimulus, activeStimuli, flashClass }: GameGridProps)
                 : 'bg-secondary-surface border-card-border'
               }
             `}
+            style={stimulus && stimulus.position === i && showColor
+              ? { backgroundColor: stimulus.color }
+              : undefined
+            }
           >
             {stimulus && stimulus.position === i && cellContent}
           </div>
