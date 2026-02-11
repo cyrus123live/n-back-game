@@ -62,7 +62,7 @@ export function GameGrid({ stimulus, activeStimuli, flashClass }: GameGridProps)
               rounded-lg border flex items-center justify-center
               transition-all duration-150
               ${stimulus && stimulus.position === i
-                ? 'bg-card border-card-border shadow-sm'
+                ? 'bg-card border-card-border shadow-sm animate-scale-up'
                 : 'bg-secondary-surface border-card-border'
               }
             `}
