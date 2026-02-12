@@ -17,10 +17,6 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
 
-console.log('[Unreel] VITE_CLERK_PUBLISHABLE_KEY present:', !!clerkPubKey);
-console.log('[Unreel] VITE_CLERK_PUBLISHABLE_KEY value:', clerkPubKey ? `${clerkPubKey.slice(0, 10)}...` : 'undefined');
-console.log('[Unreel] All VITE_ env vars:', Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')));
-
 if (!clerkPubKey) {
   throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY environment variable');
 }

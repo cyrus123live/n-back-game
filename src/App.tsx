@@ -18,6 +18,7 @@ export default function App() {
     localStorage.getItem('unreel-tutorial-seen') ? 'dashboard' : 'tutorial'
   );
   const [currentStreak, setCurrentStreak] = useState(0);
+  const [gameKey, setGameKey] = useState(0);
   const [gameSettings, setGameSettings] = useState<GameSettings | null>(null);
   const [gameResults, setGameResults] = useState<{
     results: SessionResults;
@@ -63,11 +64,13 @@ export default function App() {
       trialCount: challenge.trialCount,
       intervalMs: challenge.intervalMs,
     });
+    setGameKey((k) => k + 1);
     setView('game');
   }, []);
 
   const handleStartGame = useCallback((settings: GameSettings) => {
     setGameSettings(settings);
+    setGameKey((k) => k + 1);
     setView('game');
   }, []);
 
@@ -96,6 +99,7 @@ export default function App() {
   const handleProgramPlay = useCallback((settings: GameSettings, programId: string) => {
     setActiveProgramId(programId);
     setGameSettings(settings);
+    setGameKey((k) => k + 1);
     setView('game');
   }, []);
 
@@ -106,6 +110,7 @@ export default function App() {
         setGameSettings({ ...gameSettings, nLevel: gameResults.endingLevel });
       }
       setGameResults(null);
+      setGameKey((k) => k + 1);
       setView('game');
     }
   }, [gameSettings, gameResults]);
@@ -113,6 +118,10 @@ export default function App() {
   const handleNavigate = useCallback((target: string) => {
     setView(target as View);
   }, []);
+
+  if (!isLoaded) {
+    return <div className="min-h-screen bg-surface" />;
+  }
 
   return (
     <div className="min-h-screen bg-surface text-text-primary font-body">
@@ -138,7 +147,7 @@ export default function App() {
 
         {view === 'game' && gameSettings && (
           <GameScreen
-            key={Date.now()}
+            key={gameKey}
             settings={gameSettings}
             onFinish={handleGameFinish}
             onCancel={() => {
