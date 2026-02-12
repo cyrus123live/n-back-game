@@ -54,7 +54,7 @@ export function GameGrid({ stimulus, activeStimuli, flashClass }: GameGridProps)
   // Standard 3x3 grid mode
   return (
     <div className={`relative rounded-2xl border-2 border-card-border bg-secondary-surface p-3 ${flashClass}`}>
-      <div className="grid grid-cols-3 gap-2 w-[240px] h-[240px] sm:w-[300px] sm:h-[300px]">
+      <div className="grid grid-cols-3 grid-rows-3 gap-2 w-[240px] h-[240px] sm:w-[300px] sm:h-[300px]">
         {Array.from({ length: 9 }, (_, i) => (
           <div
             key={i}
