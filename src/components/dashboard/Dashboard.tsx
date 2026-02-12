@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import type { UserProfile, StatsData, DailyChallenge as DailyChallengeType, GameSettings, TrainingProgramRecord, StimulusType } from '../../types';
 import { getProfile, getStats, getDailyChallenge, getPrograms, getQueueLength } from '../../lib/api';
 import { CompactStatsCard } from './CompactStatsCard';
@@ -35,6 +36,7 @@ function getGreeting(): { greeting: string; subtitle: string } {
 }
 
 export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, onProgramPlay, currentStreak: streakFromApp }: DashboardProps) {
+  const { isLoaded, isSignedIn } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<StatsData | null>(null);
   const [challenge, setChallenge] = useState<DailyChallengeType | null>(null);
@@ -50,6 +52,13 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   useEffect(() => {
+    if (!isLoaded) return;
+
+    if (!isSignedIn) {
+      setLoading(false);
+      return;
+    }
+
     const load = async () => {
       try {
         const [p, s, c] = await Promise.all([
@@ -67,16 +76,16 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
           const active = programsData.programs.find((p: TrainingProgramRecord) => p.status === 'active');
           if (active) setActiveProgram(active);
         } catch {
-          // ignore if not signed in
+          // ignore
         }
       } catch {
-        // User may not be signed in
+        // API error
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, []);
+  }, [isLoaded, isSignedIn]);
 
   const setMode = (stimuli: StimulusType[]) => {
     setActiveStimuli(stimuli);

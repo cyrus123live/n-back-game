@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import type { GameSettings, SessionResults, DailyChallenge } from './types';
 import { getProfile, syncQueuedSessions } from './lib/api';
 import { Navbar } from './components/layout/Navbar';
@@ -12,6 +13,7 @@ import { ProgramsScreen } from './components/programs/ProgramsScreen';
 type View = 'dashboard' | 'game' | 'results' | 'history' | 'tutorial' | 'programs';
 
 export default function App() {
+  const { isLoaded, isSignedIn } = useAuth();
   const [view, setView] = useState<View>(() =>
     localStorage.getItem('unreel-tutorial-seen') ? 'dashboard' : 'tutorial'
   );
@@ -29,13 +31,16 @@ export default function App() {
   const [activeProgramId, setActiveProgramId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
     getProfile()
       .then((p) => setCurrentStreak(p.currentStreak))
       .catch(() => {});
-  }, [view]);
+  }, [view, isLoaded, isSignedIn]);
 
   // Sync offline-queued sessions on load and when coming back online
   useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+
     const sync = () => {
       syncQueuedSessions().then(({ synced }) => {
         if (synced > 0) {
@@ -49,7 +54,7 @@ export default function App() {
     sync();
     window.addEventListener('online', sync);
     return () => window.removeEventListener('online', sync);
-  }, []);
+  }, [isLoaded, isSignedIn]);
 
   const handleDailyChallenge = useCallback((challenge: DailyChallenge) => {
     setGameSettings({
