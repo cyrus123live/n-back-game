@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { StimulusType, GameSettings, SessionResults } from '../../types';
 import { useGameLoop } from '../../hooks/useGameLoop';
 import { useKeyboard } from '../../hooks/useKeyboard';
@@ -63,12 +63,16 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
     adaptiveData,
   } = useGameLoop(handleTrialAdvance);
 
-  // Start game on mount
+  // Track combo via ref to avoid stale closure in handleMatch
+  const comboRef = useRef(gameState.combo);
+  comboRef.current = gameState.combo;
+
+  // Start game on mount — component is keyed, remounts on new game. settings is stable for component's lifetime.
   useEffect(() => {
     startGame(settings);
   }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Speak audio letter when stimulus changes
+  // Speak audio letter when stimulus changes — speakLetter is a stable useCallback, currentStimulus derived from gameState
   useEffect(() => {
     if (
       currentStimulus &&
@@ -77,9 +81,9 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
     ) {
       speakLetter(currentStimulus.audio);
     }
-  }, [gameState.currentTrial, gameState.phase]);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [gameState.currentTrial, gameState.phase, speakLetter]);  // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Handle results
+  // Handle results — results/overallScore/xpEarned set synchronously before phase='results', guaranteed current.
   useEffect(() => {
     if (gameState.phase === 'results' && results) {
       onFinish(
@@ -105,10 +109,10 @@ export function GameScreen({ settings, onFinish, onCancel }: GameScreenProps) {
       } else {
         // Toggled on
         setPressedThisTrial((prev) => new Set(prev).add(type));
-        playComboTone(gameState.combo);
+        playComboTone(comboRef.current);
       }
     },
-    [respondMatch, playComboTone, gameState.combo]
+    [respondMatch, playComboTone]
   );
 
   useKeyboard(settings.activeStimuli, handleMatch, gameState.phase === 'playing');

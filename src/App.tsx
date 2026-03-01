@@ -11,6 +11,7 @@ import { TutorialScreen } from './components/tutorial/TutorialScreen';
 import { ProgramsScreen } from './components/programs/ProgramsScreen';
 
 type View = 'dashboard' | 'game' | 'results' | 'history' | 'tutorial' | 'programs';
+const VALID_VIEWS: View[] = ['dashboard', 'game', 'results', 'history', 'tutorial', 'programs'];
 
 export default function App() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -35,8 +36,8 @@ export default function App() {
     if (!isLoaded || !isSignedIn) return;
     getProfile()
       .then((p) => setCurrentStreak(p.currentStreak))
-      .catch(() => {});
-  }, [view, isLoaded, isSignedIn]);
+      .catch((err) => console.warn('Profile fetch failed:', err));
+  }, [isLoaded, isSignedIn]);
 
   // Sync offline-queued sessions on load and when coming back online
   useEffect(() => {
@@ -47,7 +48,7 @@ export default function App() {
         if (synced > 0) {
           getProfile()
             .then((p) => setCurrentStreak(p.currentStreak))
-            .catch(() => {});
+            .catch((err) => console.warn('Profile fetch after sync failed:', err));
         }
       });
     };
@@ -116,7 +117,9 @@ export default function App() {
   }, [gameSettings, gameResults]);
 
   const handleNavigate = useCallback((target: string) => {
-    setView(target as View);
+    if (VALID_VIEWS.includes(target as View)) {
+      setView(target as View);
+    }
   }, []);
 
   if (!isLoaded) {

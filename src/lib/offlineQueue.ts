@@ -1,6 +1,7 @@
 import type { GameSettings, SessionResults, AdaptiveLevelChange } from '../types';
 
 const STORAGE_KEY = 'unreel-offline-sessions';
+let syncing = false;
 
 export interface QueuedSession {
   id: string;
@@ -47,34 +48,42 @@ export function getQueueLength(): number {
 }
 
 export async function syncQueuedSessions(): Promise<{ synced: number; failed: number }> {
-  const queue = getQueuedSessions();
-  let synced = 0;
-  let failed = 0;
+  if (syncing) return { synced: 0, failed: 0 };
+  syncing = true;
 
-  for (const session of queue) {
-    try {
-      const res = await fetch('/api/sessions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(session.payload),
-        cache: 'no-store',
-      });
+  try {
+    const queue = getQueuedSessions();
+    let synced = 0;
+    let failed = 0;
 
-      if (res.ok) {
-        removeFromQueue(session.id);
-        synced++;
-      } else if (res.status === 401) {
-        // Auth expired — keep in queue for later
-        failed++;
-      } else {
-        failed++;
+    for (const session of queue) {
+      try {
+        // Same-origin fetch automatically includes cookies (Clerk session)
+        const res = await fetch('/api/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(session.payload),
+          cache: 'no-store',
+        });
+
+        if (res.ok) {
+          removeFromQueue(session.id);
+          synced++;
+        } else if (res.status === 401) {
+          // Auth expired — keep in queue for later
+          failed++;
+        } else {
+          failed++;
+        }
+      } catch {
+        // Network error — stop trying
+        failed += queue.length - synced - failed;
+        break;
       }
-    } catch {
-      // Network error — stop trying
-      failed += queue.length - synced - failed;
-      break;
     }
-  }
 
-  return { synced, failed };
+    return { synced, failed };
+  } finally {
+    syncing = false;
+  }
 }

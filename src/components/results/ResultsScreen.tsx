@@ -56,6 +56,8 @@ export function ResultsScreen({
     totalXp: number;
   } | null>(null);
   const confettiFired = useRef(false);
+  const mountedRef = useRef(true);
+  useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
   useEffect(() => {
     const save = async () => {
@@ -64,6 +66,8 @@ export function ResultsScreen({
           settings, results, overallScore, xpEarned, maxCombo,
           adaptive ? { adaptive: true, startingLevel, endingLevel } : undefined
         );
+
+        if (!mountedRef.current) return;
 
         // Offline queued — skip server-dependent UI
         if ('queued' in response) {
@@ -123,9 +127,10 @@ export function ResultsScreen({
         if (activeProgramId && response.session?.id) {
           try {
             const result = await completeProgramSession(activeProgramId, response.session.id, overallScore);
+            if (!mountedRef.current) return;
             setProgramResult(result);
-          } catch {
-            // ignore
+          } catch (err) {
+            console.warn('Program session completion failed:', err);
           }
         }
 
@@ -140,7 +145,7 @@ export function ResultsScreen({
           });
         }
       } catch {
-        setSaveState('error');
+        if (mountedRef.current) setSaveState('error');
       }
     };
 

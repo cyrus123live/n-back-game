@@ -37,6 +37,8 @@ export function useGameLoop(
     feedbackType: null,
     trialFeedback: null,
   });
+  const gameStateRef = useRef(gameState);
+  gameStateRef.current = gameState;
 
   const [settings, setSettings] = useState<GameSettings | null>(null);
   const [results, setResults] = useState<SessionResults | null>(null);
@@ -172,12 +174,10 @@ export function useGameLoop(
           trialFeedback: null,
         }));
 
-        // Schedule next advance
+        // Schedule next advance — read latest state via ref to avoid stale closure
         timerRef.current = setTimeout(() => {
-          setGameState((current) => {
-            advanceTrial(nextTrial, sequence, current.responses, current.combo, current.maxCombo, gameSettings);
-            return current;
-          });
+          const current = gameStateRef.current;
+          advanceTrial(nextTrial, sequence, current.responses, current.combo, current.maxCombo, gameSettings);
         }, gameSettings.intervalMs);
       }, 300);
     },
@@ -227,12 +227,10 @@ export function useGameLoop(
             phase: 'playing',
           }));
 
-          // Schedule first advance
+          // Schedule first advance — read latest state via ref to avoid stale closure
           timerRef.current = setTimeout(() => {
-            setGameState((current) => {
-              advanceTrial(0, sequence, current.responses, current.combo, current.maxCombo, gameSettings);
-              return current;
-            });
+            const current = gameStateRef.current;
+            advanceTrial(0, sequence, current.responses, current.combo, current.maxCombo, gameSettings);
           }, gameSettings.intervalMs);
         }
       }, 1000);

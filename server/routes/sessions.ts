@@ -5,15 +5,6 @@ import { formatDateInTz, getYesterdayStr } from '../lib/dates.js';
 
 const router = Router();
 
-// TEMPORARY: In-memory debug log buffer for streak debugging
-export const streakDebugLogs: string[] = [];
-function streakLog(msg: string) {
-  const entry = `[${new Date().toISOString()}] ${msg}`;
-  console.log(entry);
-  streakDebugLogs.push(entry);
-  if (streakDebugLogs.length > 50) streakDebugLogs.shift();
-}
-
 function getClerkUserId(req: Request): string | null {
   const auth = getAuth(req);
   return auth?.userId ?? null;
@@ -33,152 +24,137 @@ router.post('/', async (req: Request, res: Response) => {
   if (!clerkUserId) return res.status(401).json({ error: 'Unauthorized' });
 
   try {
-    const profile = await getOrCreateProfile(clerkUserId);
     const { nLevel, activeStimuli, trialCount, intervalMs, results, overallScore, xpEarned, maxCombo, adaptive, startingLevel, endingLevel, levelChanges, tz, localDate } = req.body;
     const userTz = typeof tz === 'string' ? tz : 'UTC';
-
-    // Check if first play of the day (in user's timezone)
     const now = new Date();
-    // Use client-provided local date to avoid server-side timezone conversion issues (Alpine small-icu)
-    const todayStr = (typeof localDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(localDate))
-      ? localDate
-      : formatDateInTz(now, userTz);
-    const yesterdayStr = getYesterdayStr(todayStr);
-    // Use stored lastPlayedDate (client's local date) with fallback to timezone conversion
-    const lastPlayedStr = profile.lastPlayedDate
-      ?? (profile.lastPlayedAt ? formatDateInTz(profile.lastPlayedAt, userTz) : null);
-    const isFirstPlayToday = lastPlayedStr !== todayStr;
 
-    // DEBUG: Log all streak-related values
-    streakLog(`SESSION SAVE: ${JSON.stringify({
-      clientLocalDate: localDate,
-      clientTz: tz,
-      todayStr,
-      yesterdayStr,
-      lastPlayedStr,
-      lastPlayedDate_db: profile.lastPlayedDate,
-      lastPlayedAt_db: profile.lastPlayedAt?.toISOString() ?? null,
-      lastPlayedAt_type: profile.lastPlayedAt === null ? 'null' : typeof profile.lastPlayedAt,
-      lastPlayedAt_isDate: profile.lastPlayedAt instanceof Date,
-      currentStreak_db: profile.currentStreak,
-      isFirstPlayToday,
-      streakFreezes: profile.streakFreezes,
-    })}`);
+    const result = await prisma.$transaction(async (tx) => {
+      const profile = await tx.userProfile.upsert({
+        where: { clerkUserId },
+        create: { clerkUserId },
+        update: {},
+      });
 
-    // Apply daily first-play bonus
-    const finalXp = isFirstPlayToday ? Math.round(xpEarned * 1.5) : xpEarned;
+      // Check if first play of the day (in user's timezone)
+      // Use client-provided local date to avoid server-side timezone conversion issues (Alpine small-icu)
+      const todayStr = (typeof localDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(localDate))
+        ? localDate
+        : formatDateInTz(now, userTz);
+      const yesterdayStr = getYesterdayStr(todayStr);
+      // Use stored lastPlayedDate (client's local date) with fallback to timezone conversion
+      const lastPlayedStr = profile.lastPlayedDate
+        ?? (profile.lastPlayedAt ? formatDateInTz(profile.lastPlayedAt, userTz) : null);
+      const isFirstPlayToday = lastPlayedStr !== todayStr;
 
-    // Update streak
-    let newStreak = profile.currentStreak;
+      // Apply daily first-play bonus
+      const finalXp = isFirstPlayToday ? Math.round(xpEarned * 1.5) : xpEarned;
 
-    if (isFirstPlayToday) {
-      if (lastPlayedStr === yesterdayStr) {
-        newStreak += 1;
-        streakLog(`INCREMENTING streak: ${profile.currentStreak} -> ${newStreak}`);
-      } else {
-        streakLog(`DATES DONT MATCH! lastPlayedStr="${lastPlayedStr}" !== yesterdayStr="${yesterdayStr}"`);
-        // Streak broken - check for freeze
-        if (profile.streakFreezes > 0 && profile.lastPlayedAt) {
-          // Use a streak freeze
-          streakLog(`USING FREEZE (${profile.streakFreezes} remaining). Streak stays at ${newStreak}`);
-          await prisma.userProfile.update({
-            where: { id: profile.id },
-            data: { streakFreezes: { decrement: 1 } },
-          });
+      // Update streak
+      let newStreak = profile.currentStreak;
+      let freezeUsed = false;
+
+      if (isFirstPlayToday) {
+        if (lastPlayedStr === yesterdayStr) {
+          newStreak += 1;
         } else {
-          streakLog(`NO FREEZE or no lastPlayedAt. Resetting to 1`);
-          newStreak = 1;
+          // Streak broken - check for freeze
+          if (profile.streakFreezes > 0 && profile.lastPlayedAt) {
+            freezeUsed = true;
+          } else {
+            newStreak = 1;
+          }
         }
       }
-    } else {
-      streakLog(`NOT first play today, streak unchanged at ${newStreak}`);
-    }
 
-    const longestStreak = Math.max(profile.longestStreak, newStreak);
+      const longestStreak = Math.max(profile.longestStreak, newStreak);
 
-    // Earn streak freeze every 7-day streak
-    const earnedFreeze = newStreak > 0 && newStreak % 7 === 0 && newStreak !== profile.currentStreak;
+      // Earn streak freeze every 7-day streak
+      const earnedFreeze = newStreak > 0 && newStreak % 7 === 0 && newStreak !== profile.currentStreak;
 
-    // Calculate new level
-    const newTotalXp = profile.xp + finalXp;
-    const newLevel = calculateLevel(newTotalXp);
+      // Calculate new level
+      const newTotalXp = profile.xp + finalXp;
+      const newLevel = calculateLevel(newTotalXp);
 
-    // Compute effective N-level for adaptive sessions (used for personal best + achievements)
-    const effectiveNLevel = adaptive && endingLevel ? endingLevel : nLevel;
+      // Compute effective N-level for adaptive sessions (used for personal best + achievements)
+      const effectiveNLevel = adaptive && endingLevel ? endingLevel : nLevel;
 
-    // Create session
-    const session = await prisma.session.create({
-      data: {
-        userId: profile.id,
-        nLevel,
-        activeStimuli,
-        trialCount,
-        intervalMs,
-        results,
-        overallScore,
-        xpEarned: finalXp,
-        maxCombo: maxCombo || 0,
-        adaptive: adaptive || false,
-        startingLevel: startingLevel ?? null,
-        endingLevel: endingLevel ?? null,
-        levelChanges: levelChanges ?? null,
-      },
-    });
+      // Create session
+      const session = await tx.session.create({
+        data: {
+          userId: profile.id,
+          nLevel,
+          activeStimuli,
+          trialCount,
+          intervalMs,
+          results,
+          overallScore,
+          xpEarned: finalXp,
+          maxCombo: maxCombo || 0,
+          adaptive: adaptive || false,
+          startingLevel: startingLevel ?? null,
+          endingLevel: endingLevel ?? null,
+          levelChanges: levelChanges ?? null,
+        },
+      });
 
-    // Check personal best at this N-level
-    const bestAtLevel = await prisma.session.findFirst({
-      where: {
-        userId: profile.id,
-        nLevel: effectiveNLevel,
-        id: { not: session.id },
-      },
-      orderBy: { overallScore: 'desc' },
-      select: { overallScore: true },
-    });
-    const isPersonalBest = !bestAtLevel || overallScore > bestAtLevel.overallScore;
+      // Check personal best at this N-level
+      const bestAtLevel = await tx.session.findFirst({
+        where: {
+          userId: profile.id,
+          nLevel: effectiveNLevel,
+          id: { not: session.id },
+        },
+        orderBy: { overallScore: 'desc' },
+        select: { overallScore: true },
+      });
+      const isPersonalBest = !bestAtLevel || overallScore > bestAtLevel.overallScore;
 
-    // Update profile
-    streakLog(`WRITING to DB: currentStreak=${newStreak}, lastPlayedDate=${todayStr}, longestStreak=${longestStreak}`);
-    await prisma.userProfile.update({
-      where: { id: profile.id },
-      data: {
-        xp: newTotalXp,
-        level: newLevel,
+      // Compute streak freeze delta: -1 if used, +1 if earned, 0 otherwise
+      const freezeDelta = (freezeUsed ? -1 : 0) + (earnedFreeze ? 1 : 0);
+
+      // Update profile (single write — freeze decrement folded in)
+      await tx.userProfile.update({
+        where: { id: profile.id },
+        data: {
+          xp: newTotalXp,
+          level: newLevel,
+          currentStreak: newStreak,
+          longestStreak,
+          lastPlayedAt: now,
+          lastPlayedDate: todayStr,
+          ...(freezeDelta !== 0 ? { streakFreezes: { increment: freezeDelta } } : {}),
+        },
+      });
+
+      // Check achievements
+      const newAchievements = await checkAchievements(profile.id, {
+        sessionCount: await tx.session.count({ where: { userId: profile.id } }),
         currentStreak: newStreak,
-        longestStreak,
-        lastPlayedAt: now,
-        lastPlayedDate: todayStr,
-        ...(earnedFreeze ? { streakFreezes: { increment: 1 } } : {}),
-      },
-    });
-    streakLog(`DB WRITE COMPLETE. Responding with newStreak=${newStreak}`);
+        overallScore,
+        nLevel: effectiveNLevel,
+        activeStimuli,
+        maxCombo: maxCombo || 0,
+        level: newLevel,
+        totalXp: newTotalXp,
+      }, tx);
 
-    // Check achievements
-    const newAchievements = await checkAchievements(profile.id, {
-      sessionCount: await prisma.session.count({ where: { userId: profile.id } }),
-      currentStreak: newStreak,
-      overallScore,
-      nLevel: effectiveNLevel,
-      activeStimuli,
-      maxCombo: maxCombo || 0,
-      level: newLevel,
-      totalXp: newTotalXp,
+      const leveledUp = newLevel > profile.level;
+
+      return {
+        session,
+        xpEarned: finalXp,
+        totalXp: newTotalXp,
+        isFirstPlayToday,
+        newLevel,
+        leveledUp,
+        newStreak,
+        newAchievements,
+        earnedFreeze,
+        isPersonalBest,
+      };
     });
 
-    const leveledUp = newLevel > profile.level;
-
-    res.json({
-      session,
-      xpEarned: finalXp,
-      totalXp: newTotalXp,
-      isFirstPlayToday,
-      newLevel,
-      leveledUp,
-      newStreak,
-      newAchievements,
-      earnedFreeze,
-      isPersonalBest,
-    });
+    res.json(result);
   } catch (err) {
     console.error('Error saving session:', err);
     res.status(500).json({ error: 'Failed to save session' });
@@ -275,8 +251,10 @@ const ACHIEVEMENTS = [
   { id: 'xp_hunter', check: (d: AchievementCheckData) => d.totalXp >= 1000 },
 ];
 
-async function checkAchievements(userId: string, data: AchievementCheckData): Promise<string[]> {
-  const existing = await prisma.userAchievement.findMany({
+type TransactionClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
+async function checkAchievements(userId: string, data: AchievementCheckData, tx: TransactionClient | typeof prisma = prisma): Promise<string[]> {
+  const existing = await tx.userAchievement.findMany({
     where: { userId },
     select: { achievementId: true },
   });
@@ -286,7 +264,7 @@ async function checkAchievements(userId: string, data: AchievementCheckData): Pr
 
   for (const achievement of ACHIEVEMENTS) {
     if (!existingIds.has(achievement.id) && achievement.check(data)) {
-      await prisma.userAchievement.create({
+      await tx.userAchievement.create({
         data: { userId, achievementId: achievement.id },
       });
       newAchievements.push(achievement.id);

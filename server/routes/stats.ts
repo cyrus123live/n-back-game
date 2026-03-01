@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../db.js';
 import { getAuth } from '@clerk/express';
 import { formatDateInTz, getYesterdayStr } from '../lib/dates.js';
-import { streakDebugLogs } from './sessions.js';
 
 const router = Router();
 
@@ -39,22 +38,8 @@ router.get('/profile', async (req: Request, res: Response) => {
     const lastPlayedStr = profile.lastPlayedDate
       ?? (profile.lastPlayedAt ? formatDateInTz(profile.lastPlayedAt, userTz) : null);
 
-    // DEBUG: Log profile streak check
-    streakDebugLogs.push(`[${new Date().toISOString()}] PROFILE CHECK: ${JSON.stringify({
-      clientLocalDate: localDate,
-      clientTz: userTz,
-      todayStr,
-      yesterdayStr,
-      lastPlayedStr,
-      lastPlayedDate_db: profile.lastPlayedDate,
-      lastPlayedAt_db: profile.lastPlayedAt?.toISOString() ?? null,
-      currentStreak_db: profile.currentStreak,
-    })}`);
-    if (streakDebugLogs.length > 50) streakDebugLogs.shift();
-
     let streakBroken = false;
     if (lastPlayedStr && lastPlayedStr < yesterdayStr && profile.currentStreak > 0) {
-      streakDebugLogs.push(`[${new Date().toISOString()}] PROFILE BREAKING STREAK! "${lastPlayedStr}" < "${yesterdayStr}"`);
       streakBroken = true;
       await prisma.userProfile.update({
         where: { id: profile.id },
@@ -225,80 +210,6 @@ router.get('/daily-challenge', async (req: Request, res: Response) => {
     timeUntilNext,
     dateKey: dateStr,
   });
-});
-
-// TEMPORARY DEBUG ENDPOINT - remove after fixing streak bug
-router.get('/debug/streak', async (_req: Request, res: Response) => {
-  try {
-    const profiles = await prisma.userProfile.findMany({
-      orderBy: { lastPlayedAt: 'desc' },
-      take: 3,
-      select: {
-        id: true,
-        currentStreak: true,
-        longestStreak: true,
-        lastPlayedAt: true,
-        lastPlayedDate: true,
-        streakFreezes: true,
-      },
-    });
-
-    // Get recent sessions for each profile to see play dates
-    const profilesWithSessions = await Promise.all(profiles.map(async (p) => {
-      const sessions = await prisma.session.findMany({
-        where: { userId: p.id },
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-        select: { createdAt: true },
-      });
-      const sessionDatesUTC = sessions.map(s => s.createdAt.toISOString());
-      const sessionDatesToronto = sessions.map(s => {
-        try { return formatDateInTz(s.createdAt, 'America/Toronto'); }
-        catch { return formatDateInTz(s.createdAt, 'UTC'); }
-      });
-      // Also format lastPlayedAt in Toronto tz
-      const lastPlayedFormatted = p.lastPlayedAt
-        ? (() => { try { return formatDateInTz(p.lastPlayedAt, 'America/Toronto'); } catch { return formatDateInTz(p.lastPlayedAt, 'UTC'); } })()
-        : null;
-      const lastPlayedType = p.lastPlayedAt === null ? 'null' : `${typeof p.lastPlayedAt} isDate=${p.lastPlayedAt instanceof Date}`;
-      return { ...p, lastPlayedFormatted, lastPlayedType, sessionDatesUTC, sessionDatesToronto };
-    }));
-
-    const now = new Date();
-    const todayToronto = formatDateInTz(now, 'America/Toronto');
-    const yesterdayToronto = getYesterdayStr(todayToronto);
-
-    const tzTest = {
-      utcNow: now.toISOString(),
-      formatUTC: formatDateInTz(now, 'UTC'),
-      formatToronto: todayToronto,
-      yesterdayToronto,
-    };
-
-    // Test if Intl timezone actually works or silently falls back
-    const tzActuallyWorks = (() => {
-      try {
-        const utcHour = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', hour: 'numeric', hour12: false }).format(now);
-        const torontoHour = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Toronto', hour: 'numeric', hour12: false }).format(now);
-        const vancouverHour = (() => { try { return new Intl.DateTimeFormat('en-US', { timeZone: 'America/Vancouver', hour: 'numeric', hour12: false }).format(now); } catch (e) { return `ERROR: ${e}`; } })();
-        const vancouverDate = (() => { try { return formatDateInTz(now, 'America/Vancouver'); } catch (e) { return `ERROR: ${e}`; } })();
-        // Test with the first profile's lastPlayedAt to see what old code would have computed
-        const firstProfileLastPlayed = profiles[0]?.lastPlayedAt;
-        const oldCodeTest = firstProfileLastPlayed ? (() => {
-          const lpVancouver = (() => { try { return formatDateInTz(firstProfileLastPlayed, 'America/Vancouver'); } catch { return formatDateInTz(firstProfileLastPlayed, 'UTC'); } })();
-          const lpUTC = formatDateInTz(firstProfileLastPlayed, 'UTC');
-          return { lastPlayedAt: firstProfileLastPlayed.toISOString(), inVancouver: lpVancouver, inUTC: lpUTC };
-        })() : null;
-        return { utcHour, torontoHour, vancouverHour, vancouverDate, oldCodeTest };
-      } catch (e) {
-        return { error: String(e) };
-      }
-    })();
-
-    res.json({ profiles: profilesWithSessions, tzTest, tzActuallyWorks, recentLogs: streakDebugLogs.slice(-20) });
-  } catch (err) {
-    res.status(500).json({ error: String(err) });
-  }
 });
 
 export default router;

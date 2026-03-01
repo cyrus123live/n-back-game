@@ -78,8 +78,8 @@ export async function saveSession(
       body: JSON.stringify(payload),
     });
   } catch (err) {
-    // Queue offline if network error
-    if (!navigator.onLine || (err instanceof TypeError)) {
+    // Queue offline only when genuinely offline (not for CORS or coding errors)
+    if (!navigator.onLine) {
       enqueueSession(payload as Parameters<typeof enqueueSession>[0]);
       return { queued: true };
     }

@@ -42,6 +42,8 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
   const [challenge, setChallenge] = useState<DailyChallengeType | null>(null);
   const [activeProgram, setActiveProgram] = useState<TrainingProgramRecord | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   // Inline settings state
   const [nLevel, setNLevel] = useState(2);
@@ -78,14 +80,15 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
         } catch {
           // ignore
         }
-      } catch {
-        // API error
+      } catch (err) {
+        console.warn('Dashboard data load failed:', err);
+        setError(true);
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [isLoaded, isSignedIn]);
+  }, [isLoaded, isSignedIn, retryKey]);
 
   const setMode = (stimuli: StimulusType[]) => {
     setActiveStimuli(stimuli);
@@ -119,6 +122,15 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
         </div>
 
         <InstallPrompt />
+
+        {error && (
+          <button
+            onClick={() => { setError(false); setRetryKey(k => k + 1); }}
+            className="card border-[#c4a035]/30 text-sm text-[#c4a035] text-center w-full"
+          >
+            Could not load your data. Tap to retry.
+          </button>
+        )}
 
         {queuedCount > 0 && (
           <div className="card border-[#c4a035]/30 text-sm text-[#c4a035]">
@@ -178,6 +190,15 @@ export function Dashboard({ onStart, onDailyChallenge, onTutorial, onNavigate, o
       )}
 
       <InstallPrompt />
+
+      {error && (
+        <button
+          onClick={() => { setError(false); setRetryKey(k => k + 1); }}
+          className="card border-[#c4a035]/30 text-sm text-[#c4a035] text-center w-full"
+        >
+          Could not load your data. Tap to retry.
+        </button>
+      )}
 
       {queuedCount > 0 && (
         <div className="card border-[#c4a035]/30 text-sm text-[#c4a035]">
