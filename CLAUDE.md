@@ -34,11 +34,11 @@ Strengthen working memory for as many people as possible. Every design and engin
 - **State**: No state library; `App.tsx` manages view routing via `useState`, game state lives in `useGameLoop`
 - **Components**: `components/game/` (gameplay), `components/dashboard/` (home + inline settings), `components/results/`, `components/history/` (charts, best-score-by-day, achievements grouped by category, session list), `components/layout/`, `components/tutorial/`, `components/programs/`, `components/pwa/` (install prompt), `components/icons/` (FlameIcon, TargetIcon, AchievementIcon, StimulusIcon SVG components)
 - **Theme**: `lib/theme.ts` — `getPreferredTheme()`, `applyTheme()`, `toggleTheme()`, `getCurrentTheme()`. Persists to localStorage key `unreel-theme`. Falls back to `prefers-color-scheme` media query
-- **Offline queue**: `lib/offlineQueue.ts` — stores failed session saves in localStorage (`unreel-offline-sessions`), syncs when back online
+- **Offline queue**: `lib/offlineQueue.ts` — stores failed session saves in localStorage (`unreel-offline-sessions`), syncs when back online. Has module-level `syncing` guard to prevent concurrent sync calls
 
 ### Backend (`server/`)
 - `index.ts` - Express entry, serves Vite build from `dist/client/` + API routes
-- `routes/sessions.ts` - POST (save session + XP + streaks + achievements + personal best check), GET (paginated history), DELETE (remove session)
+- `routes/sessions.ts` - POST (save session + XP + streaks + achievements + personal best check — all wrapped in `prisma.$transaction`), GET (paginated history), DELETE (remove session)
 - `routes/programs.ts` - GET (list programs), POST `/enroll`, POST `/:id/complete-session` (score-gated), DELETE `/:id` (abandon)
 - `routes/stats.ts` - GET `/api/profile`, `/api/stats`, `/api/achievements`, `/api/daily-challenge`
 - `lib/programs.ts` - Template validation, phase boundaries for skip target computation
@@ -113,6 +113,12 @@ Dark mode uses CSS custom properties defined in `src/index.css` (`:root` and `.d
 - AudioContext requires user interaction to unlock (autoplay policy) - `useAudio.ts` uses a module-level singleton with global unlock on first click/touch/keydown
 - Match buttons are toggleable - pressing again before trial ends un-selects the response (`respondMatch` returns `boolean` indicating toggle state)
 - Adaptive difficulty is between-session only (evaluates at end, recommends next level: >=85% up, <=50% down)
+- `useGameLoop` uses `gameStateRef` (useRef synced to gameState) to read latest state in timer callbacks — avoids the anti-pattern of using `setGameState` updater for side-effect reads
+- `GameScreen` uses `comboRef` to pass current combo to `playComboTone` in `handleMatch` callback without re-creating it on every combo change
+- `App.tsx` `handleNavigate` validates against `VALID_VIEWS` array before setting view state
+- `offlineQueue.ts` `syncQueuedSessions` has a module-level `syncing` guard to prevent concurrent calls from `online` events
+- `api.ts` `saveSession` only queues offline when `!navigator.onLine` — does NOT catch `TypeError` (which could mask CORS or coding bugs)
+- Dashboard has `error`/`retryKey` state for failed data loads, shows a retry banner button
 - Training program progression is score-gated (70% to advance, 90%+ to skip to next phase). Phase boundaries defined in `server/lib/programs.ts` as `TEMPLATE_PHASES`
 - Express `req.params.id` can be `string | string[]` - cast with `as string` in route handlers
 - Dashboard has inline settings (no separate settings screen) — N-level picker (2 rows of 5, levels 1-10), mode selector (Mono/Dual/Triple/Quad presets), collapsible Advanced section (trials, interval, adaptive)
@@ -120,7 +126,7 @@ Dark mode uses CSS custom properties defined in `src/index.css` (`:root` and `.d
 - Programs screen shows sign-up prompt for unauthenticated users, with greyed-out preview of available programs
 - Default mode is Dual (`['position', 'color']`). Mode presets: Mono (position), Dual (position+color), Triple (+shape), Quad (+number). Audio stimulus not in any preset
 - GameGrid renders a single centered square when `position` is not in `activeStimuli`
-- ResultsScreen propagates `newStreak` back to App.tsx via `onStreakUpdate` callback so the Navbar streak counter updates immediately after session save. App.tsx also passes `currentStreak` down to Dashboard so the CompactStatsCard always reflects the latest value (handles race condition where user navigates back before save completes)
+- ResultsScreen propagates `newStreak` back to App.tsx via `onStreakUpdate` callback so the Navbar streak counter updates immediately after session save. App.tsx also passes `currentStreak` down to Dashboard so the CompactStatsCard always reflects the latest value (handles race condition where user navigates back before save completes). ResultsScreen uses `mountedRef` to guard all setState calls after async save/program-completion to prevent React warnings on unmount
 - ResultsScreen shows animated XP level bar for signed-in users: bar fills from old progress to new progress with 1-second animation. Server returns `totalXp` in session save response to enable client-side threshold calculation
 - ResultsScreen shows personal best celebration card (yellow border, `animate-fade-in-up`) when `isPersonalBest` is true. Server checks via `Session.findFirst` at the effective N-level excluding current session. First session at any N-level is always a personal best. Confetti fires for personal best (60 particles) in addition to level-up (80) and high score (40)
 - ResultsScreen accuracy-by-type shows percentage + colored bar + hit/miss/false-alarm counts. Max combo widget removed. Save status only shown for `queued` and `error` states (no "Saving..."/"Session saved")
